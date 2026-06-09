@@ -47,10 +47,16 @@ jobs:
           username: ubuntu
           key: ${{ secrets.SERVER_SSH_KEY }}
           script: |
-            docker pull ${{ secrets.ECR_REGISTRY }}/awinteck-services:ai-tutor-web-${{ github.sha }}
+            set -e
+
+            IMAGE=$({{ secrets.ECR_REGISTRY }}/awinteck-services:ai-tutor-web-${{ github.sha }})
+
+            echo "Deploying: $IMAGE"
+
+            docker pull $IMAGE
             docker stop ai-tutor-web || true
             docker rm ai-tutor-web || true
             docker run -d -p 7071:7071 \
               --restart always \
               --name ai-tutor-web \ 
-              ${{ secrets.ECR_REGISTRY }}/awinteck-services:ai-tutor-web-${{ github.sha }}
+              $IMAGE
