@@ -1,6 +1,7 @@
-import { Pagination, TextInput } from '@mantine/core';
+import { TextInput } from '@mantine/core';
 import { Search } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import DataListFooter from './DataListFooter';
 import { useClientPagination } from '../hooks/useClientPagination';
 import { TableSkeleton } from './TableSkeleton';
 
@@ -45,17 +46,16 @@ const AdesiaDataTable = ({
   const client = useClientPagination(filteredData, pageSize);
 
   const rows = serverPagination || !paginate ? data : client.paginatedItems;
-  const showFooter = serverPagination
-    ? totalPages > 1
-    : paginate && client.showPagination;
-
   const footerStart = serverPagination ? rangeStart : client.rangeStart;
   const footerEnd = serverPagination ? rangeEnd : client.rangeEnd;
   const footerTotal = serverPagination ? totalItems : client.totalItems;
-  const showSearch = searchable && !serverPagination;
   const footerPage = serverPagination ? page : client.page;
   const footerTotalPages = serverPagination ? totalPages : client.totalPages;
   const handlePageChange = serverPagination ? onPageChange : client.setPage;
+  const showSearch = searchable;
+  const showFooter = serverPagination
+    ? footerTotal > 0 || footerTotalPages > 1
+    : paginate && (footerTotal > 0 || client.showPagination);
 
   if (loading) {
     return <TableSkeleton rows={skeletonRows} columns={columns.length || 4} title={title || true} />;
@@ -121,18 +121,15 @@ const AdesiaDataTable = ({
       </div>
 
       {showFooter && (
-        <div className="flex flex-col gap-3 border-t border-border/50 px-5 py-3 sm:flex-row sm:items-center sm:justify-between">
-          <p className="text-xs text-muted-foreground">
-            Showing {footerStart}–{footerEnd} of {footerTotal}
-          </p>
-          <Pagination
-            total={footerTotalPages}
-            value={footerPage}
-            onChange={(value) => handlePageChange(Number(value))}
-            size="sm"
-            withEdges
-          />
-        </div>
+        <DataListFooter
+          rangeStart={footerStart}
+          rangeEnd={footerEnd}
+          totalItems={footerTotal}
+          page={footerPage}
+          totalPages={footerTotalPages}
+          pageSize={pageSize}
+          onPageChange={handlePageChange}
+        />
       )}
     </div>
   );

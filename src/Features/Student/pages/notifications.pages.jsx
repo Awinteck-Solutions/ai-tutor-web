@@ -130,6 +130,7 @@ const StudentNotificationsPage = () => {
         totalItems={meta.total ?? 0}
         rangeStart={rangeStart}
         rangeEnd={rangeEnd}
+        pageSize={12}
         onPageChange={setPage}
         paginate={false}
         emptyMessage="No notifications in this view."

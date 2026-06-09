@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, NavLink, Outlet, useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, LogOut, Menu, X } from 'lucide-react';
+import { AdesiaIcon } from '../components/AdesiaIcon';
 import { AdesiaLogo } from '../components/AdesiaLogo';
 import { ThemeToggle } from '../components/ThemeToggle';
 import { GlowOrbs } from '../components/GlowOrbs';
@@ -53,8 +54,8 @@ const Sidebar = ({
     <div className={`flex items-center border-b border-border/50 p-3 ${collapsed ? 'justify-center' : 'gap-2 p-4'}`}>
       {!collapsed && <AdesiaLogo size="sm" className="min-w-0 flex-1" />}
       {collapsed && (
-        <Link to="/" className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary/15 font-display text-sm font-bold text-primary no-underline">
-          A
+        <Link to="/" className="no-underline" aria-label="Adesia home">
+          <AdesiaIcon className="h-9 w-9 rounded-xl shadow-glow-sm ring-1 ring-primary/30" />
         </Link>
       )}
       {!collapsed && (
@@ -206,12 +207,7 @@ const AppShell = ({
               >
                 <Menu className="h-5 w-5" />
               </button>
-              <Link
-                to={homePath}
-                className="font-display text-sm font-bold text-foreground no-underline lg:hidden"
-              >
-                Adesia
-              </Link>
+              <AdesiaLogo to={homePath} size="sm" className="lg:hidden" />
             </div>
             <ThemeToggle />
           </header>

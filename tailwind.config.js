@@ -41,12 +41,27 @@ export default {
         float: 'float 8s ease-in-out infinite',
         'float-delayed': 'float 10s ease-in-out 2s infinite',
         'float-slow': 'float 12s ease-in-out 4s infinite',
+        'fab-bounce': 'fab-bounce 2.4s ease-in-out infinite',
+        'sparkle-twinkle': 'sparkle-twinkle 4s ease-in-out infinite',
+        'fab-icon-in': 'fab-icon-in 0.45s ease-in-out',
       },
       keyframes: {
         float: {
           '0%, 100%': { transform: 'translate(0, 0) scale(1)' },
           '33%': { transform: 'translate(12px, -20px) scale(1.03)' },
           '66%': { transform: 'translate(-8px, 12px) scale(0.97)' },
+        },
+        'fab-bounce': {
+          '0%, 100%': { transform: 'translateY(0)' },
+          '50%': { transform: 'translateY(-8px)' },
+        },
+        'sparkle-twinkle': {
+          '0%, 100%': { opacity: '0.15', transform: 'scale(0.7) rotate(0deg)' },
+          '50%': { opacity: '1', transform: 'scale(1.08) rotate(18deg)' },
+        },
+        'fab-icon-in': {
+          '0%': { opacity: '0', transform: 'scale(0.82) rotate(-10deg)' },
+          '100%': { opacity: '1', transform: 'scale(1) rotate(0deg)' },
         },
       },
       backgroundImage: {

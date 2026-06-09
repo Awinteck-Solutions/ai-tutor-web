@@ -14,6 +14,7 @@ import {
   Wrench,
   FileText,
   ScrollText,
+  Shield,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import AppShell from './AppShell';
@@ -71,6 +72,11 @@ export const adminNavGroups = [
   },
 ];
 
+const platformNavItem = {
+  title: 'Platform',
+  items: [{ label: 'Platform admin', path: '/platform/dashboard', icon: Shield }],
+};
+
 const OrgBanner = ({ organizationId }) =>
   !organizationId ? (
     <div className="alert-warning">
@@ -83,10 +89,14 @@ const OrgBanner = ({ organizationId }) =>
   ) : null;
 
 const AdminLayout = () => {
-  const { organizationId } = useAuth();
+  const { organizationId, isPlatformAdmin } = useAuth();
+  const navGroups = isPlatformAdmin
+    ? [...adminNavGroups, platformNavItem]
+    : adminNavGroups;
+
   return (
     <AppShell
-      navGroups={adminNavGroups}
+      navGroups={navGroups}
       homePath="/admin/dashboard"
       portalLabel="Admin"
       banner={<OrgBanner organizationId={organizationId} />}

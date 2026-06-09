@@ -174,10 +174,6 @@ const StudentPracticePage = () => {
     setTab(value);
   };
 
-  const activeCountLabel = tab === 'quizzes'
-    ? `${activeList.totalItems} quiz${activeList.totalItems === 1 ? '' : 'zes'}`
-    : `${activeList.totalItems} lesson${activeList.totalItems === 1 ? '' : 's'}`;
-
   const closeQuiz = () => {
     setActiveQuiz(null);
     setQuizRetake(false);
@@ -304,13 +300,6 @@ const StudentPracticePage = () => {
         />
       </ListGridToolbar>
 
-      <p className="-mt-2 mb-4 text-sm text-muted-foreground">
-        {activeCountLabel}
-        {activeList.search.trim() || activeList.filterValues.status !== 'all' || activeList.filterValues.source !== 'all'
-          ? ' matching filters'
-          : ''}
-      </p>
-
       <Tabs value={tab} onChange={handleTabChange}>
         <Tabs.List className="mb-4 flex-wrap gap-1 rounded-xl border border-border/50 bg-card/50 p-1">
           <Tabs.Tab value="quizzes" leftSection={<BookOpen className="h-4 w-4" />}>
@@ -322,18 +311,30 @@ const StudentPracticePage = () => {
         </Tabs.List>
 
         <Tabs.Panel value="quizzes">
-          <SegmentedControl
-            className="mb-4"
-            value={quizList.filterValues.status ?? 'all'}
-            onChange={(v) => quizList.setFilter('status', v ?? 'all')}
-            data={[
-              { label: 'All', value: 'all' },
-              { label: 'Pending', value: 'pending' },
-              { label: 'Completed', value: 'completed' },
-            ]}
-          />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {quizList.paginatedItems.length ? quizList.paginatedItems.map((q) => {
+          <div className="glass-card overflow-hidden">
+            <div className="flex flex-col gap-4 border-b border-border/50 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="font-display text-sm font-semibold text-foreground">Quizzes</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {quizList.totalItems} quiz{quizList.totalItems === 1 ? '' : 'zes'}
+                  {quizList.search.trim() || quizList.filterValues.status !== 'all' || quizList.filterValues.source !== 'all'
+                    ? ' matching filters'
+                    : ''}
+                </p>
+              </div>
+              <SegmentedControl
+                value={quizList.filterValues.status ?? 'all'}
+                onChange={(v) => quizList.setFilter('status', v ?? 'all')}
+                data={[
+                  { label: 'All', value: 'all' },
+                  { label: 'Pending', value: 'pending' },
+                  { label: 'Completed', value: 'completed' },
+                ]}
+              />
+            </div>
+
+            <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
+              {quizList.paginatedItems.length ? quizList.paginatedItems.map((q) => {
               const { Icon: QuizIcon, tone } = quizIcon(q.status);
               return (
               <GlassCard key={q.quizId} className="flex flex-col p-5">
@@ -420,38 +421,50 @@ const StudentPracticePage = () => {
                 </div>
               </GlassCard>
             );
-            }) : (
+            }            ) : (
               <p className="col-span-full py-12 text-center text-muted-foreground">
                 {quizList.filtered.length ? 'No quizzes on this page.' : 'No quizzes match your filters.'}
               </p>
             )}
+            </div>
+
+            <DataListFooter
+              rangeStart={quizList.rangeStart}
+              rangeEnd={quizList.rangeEnd}
+              totalItems={quizList.totalItems}
+              page={quizList.page}
+              totalPages={quizList.totalPages}
+              pageSize={PRACTICE_PAGE_SIZE}
+              onPageChange={quizList.setPage}
+            />
           </div>
-          <DataListFooter
-            rangeStart={quizList.rangeStart}
-            rangeEnd={quizList.rangeEnd}
-            totalItems={quizList.totalItems}
-            page={quizList.page}
-            totalPages={quizList.totalPages}
-            pageSize={PRACTICE_PAGE_SIZE}
-            onPageChange={quizList.setPage}
-          />
         </Tabs.Panel>
 
         <Tabs.Panel value="flashcards">
-          <div className="mb-4">
-            <SegmentedControl
-              value={flashcardList.filterValues.status ?? 'all'}
-              onChange={(v) => flashcardList.setFilter('status', v ?? 'all')}
-              data={[
-                { label: 'All', value: 'all' },
-                { label: 'In progress', value: 'pending' },
-                { label: 'Complete', value: 'completed' },
-              ]}
-            />
-          </div>
+          <div className="glass-card overflow-hidden">
+            <div className="flex flex-col gap-4 border-b border-border/50 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
+              <div>
+                <h3 className="font-display text-sm font-semibold text-foreground">Flashcard lessons</h3>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {flashcardList.totalItems} lesson{flashcardList.totalItems === 1 ? '' : 's'}
+                  {flashcardList.search.trim() || flashcardList.filterValues.status !== 'all' || flashcardList.filterValues.source !== 'all'
+                    ? ' matching filters'
+                    : ''}
+                </p>
+              </div>
+              <SegmentedControl
+                value={flashcardList.filterValues.status ?? 'all'}
+                onChange={(v) => flashcardList.setFilter('status', v ?? 'all')}
+                data={[
+                  { label: 'All', value: 'all' },
+                  { label: 'In progress', value: 'pending' },
+                  { label: 'Complete', value: 'completed' },
+                ]}
+              />
+            </div>
 
-          <div className="space-y-6">
-            {flashcardList.paginatedItems.length ? flashcardList.paginatedItems.map((group) => {
+            <div className="space-y-6 p-5">
+              {flashcardList.paginatedItems.length ? flashcardList.paginatedItems.map((group) => {
               const isOpen = isLessonExpanded(group.lessonId);
               return (
               <GlassCard key={group.lessonId} className="overflow-hidden p-0">
@@ -571,21 +584,23 @@ const StudentPracticePage = () => {
                 </Collapse>
               </GlassCard>
             );
-            }) : (
+            }            ) : (
               <p className="py-12 text-center text-muted-foreground">
                 {flashcardList.filtered.length ? 'No groups on this page.' : 'No flashcard groups match your filters.'}
               </p>
             )}
+            </div>
+
+            <DataListFooter
+              rangeStart={flashcardList.rangeStart}
+              rangeEnd={flashcardList.rangeEnd}
+              totalItems={flashcardList.totalItems}
+              page={flashcardList.page}
+              totalPages={flashcardList.totalPages}
+              pageSize={FLASHCARD_PAGE_SIZE}
+              onPageChange={flashcardList.setPage}
+            />
           </div>
-          <DataListFooter
-            rangeStart={flashcardList.rangeStart}
-            rangeEnd={flashcardList.rangeEnd}
-            totalItems={flashcardList.totalItems}
-            page={flashcardList.page}
-            totalPages={flashcardList.totalPages}
-            pageSize={FLASHCARD_PAGE_SIZE}
-            onPageChange={flashcardList.setPage}
-          />
         </Tabs.Panel>
       </Tabs>
 

@@ -1,12 +1,15 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams, useSearchParams } from 'react-router-dom';
 import { Drawer } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
 import {
+  Bot,
   ExternalLink,
   MessageCircle,
   MessageSquare,
   NotebookPen,
   Plus,
+  Sparkles,
   X,
 } from 'lucide-react';
 import { useAuth } from '../../../shared/context/AuthContext';
@@ -28,6 +31,7 @@ const QUICK_ACTIONS = [
     iconClass: 'bg-amber-400/20 text-amber-700 dark:bg-amber-400/25 dark:text-amber-300',
     rowClass: 'hover:bg-amber-500/10 hover:border-amber-500/25 border-transparent',
     onClick: 'chat',
+    requiresLesson: true,
   },
   {
     id: 'full-chat',
@@ -38,6 +42,7 @@ const QUICK_ACTIONS = [
     rowClass: 'hover:bg-sky-500/10 hover:border-sky-500/25 border-transparent',
     href: (lessonId) =>
       lessonId ? `/student/chat?lessonId=${lessonId}` : '/student/chat',
+    requiresLesson: false,
   },
   {
     id: 'notes',
@@ -50,6 +55,12 @@ const QUICK_ACTIONS = [
   },
 ];
 
+const FAB_ICON_CYCLE = [
+  { Icon: Plus, label: 'Quick actions' },
+  { Icon: Bot, label: 'AI tutor' },
+  { Icon: NotebookPen, label: 'Notes' },
+];
+
 const StudentQuickActions = () => {
   const { organizationId } = useAuth();
   const { lessonId: routeLessonId } = useParams();
@@ -57,8 +68,21 @@ const StudentQuickActions = () => {
   const [menuOpen, setMenuOpen] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
   const [notesOpen, setNotesOpen] = useState(false);
+  const [fabIconIndex, setFabIconIndex] = useState(0);
 
   const defaultLessonId = routeLessonId || searchParams.get('lessonId') || undefined;
+
+  useEffect(() => {
+    if (menuOpen) return undefined;
+
+    const intervalId = window.setInterval(() => {
+      setFabIconIndex((index) => (index + 1) % FAB_ICON_CYCLE.length);
+    }, 2000);
+
+    return () => window.clearInterval(intervalId);
+  }, [menuOpen]);
+
+  const FabIcon = FAB_ICON_CYCLE[fabIconIndex].Icon;
 
   const chatContext = useMemo(
     () => (defaultLessonId ? { lessonId: defaultLessonId } : {}),
@@ -69,7 +93,17 @@ const StudentQuickActions = () => {
 
   const handleAction = (action) => {
     setMenuOpen(false);
-    if (action === 'chat') setChatOpen(true);
+    if (action === 'chat') {
+      if (!defaultLessonId) {
+        notifications.show({
+          title: 'Open a lesson first',
+          message: 'AI chat is available within a lesson.',
+          color: 'orange',
+        });
+        return;
+      }
+      setChatOpen(true);
+    }
     if (action === 'notes') setNotesOpen(true);
   };
 
@@ -144,15 +178,38 @@ const StudentQuickActions = () => {
           </div>
         )}
 
-        <button
-          type="button"
-          onClick={() => setMenuOpen((o) => !o)}
-          className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-amber-950 shadow-lg shadow-amber-500/30 transition hover:scale-105 active:scale-95"
-          aria-label={menuOpen ? 'Close quick actions' : 'Quick actions'}
-          aria-expanded={menuOpen}
-        >
-          {menuOpen ? <X className="h-6 w-6" /> : <Plus className="h-6 w-6" />}
-        </button>
+        <div className={`relative ${menuOpen ? '' : 'animate-fab-bounce'}`}>
+          {!menuOpen && (
+            <>
+              <Sparkles
+                className="pointer-events-none absolute -right-1 -top-1 h-4 w-4 animate-sparkle-twinkle text-amber-100 drop-shadow-sm"
+                aria-hidden
+              />
+              <Sparkles
+                className="pointer-events-none absolute -left-2 top-2 h-3.5 w-3.5 animate-sparkle-twinkle text-yellow-200 drop-shadow-sm [animation-delay:1.3s]"
+                aria-hidden
+              />
+              <Sparkles
+                className="pointer-events-none absolute -top-2 left-1/2 h-3 w-3 -ml-1.5 animate-sparkle-twinkle text-white/90 drop-shadow-sm [animation-delay:2.6s]"
+                aria-hidden
+              />
+            </>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setMenuOpen((o) => !o)}
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-amber-950 shadow-lg shadow-amber-500/30 transition hover:scale-105 active:scale-95"
+            aria-label={menuOpen ? 'Close quick actions' : FAB_ICON_CYCLE[fabIconIndex].label}
+            aria-expanded={menuOpen}
+          >
+            {menuOpen ? (
+              <X className="h-6 w-6" />
+            ) : (
+              <FabIcon key={fabIconIndex} className="h-6 w-6 animate-fab-icon-in" aria-hidden />
+            )}
+          </button>
+        </div>
       </div>
 
       <ChatPanel

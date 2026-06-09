@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Modal, Select, Tabs, TextInput } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -9,11 +9,13 @@ import { AdesiaBadge } from '../../../shared/components/AdesiaBadge';
 import { EmptyOrgHint } from '../../../shared/components/PageLoader';
 import { PageHeaderSkeleton } from '../../../shared/components/TableSkeleton';
 import AdesiaDataTable from '../../../shared/components/AdesiaDataTable';
+import DataListFooter from '../../../shared/components/DataListFooter';
 import ListGridToolbar from '../../../shared/components/ListGridToolbar';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { AdesiaModal } from '../../../shared/components/AdesiaModal';
 import { GradientButton } from '../../../shared/components/GradientButton';
-import { formatDateShort, getErrorMessage } from '../../../shared/utils/formatters';
+import { useServerList } from '../../../shared/hooks/useServerList';
+import { emptyPaginated, formatDateShort, getErrorMessage } from '../../../shared/utils/formatters';
 import {
   createMember, getInvites, getMembers, removeMember, sendInvite, suspendMember,
 } from '../services/organization.services';
@@ -25,11 +27,10 @@ const ROLES = [
   { value: 'SCHOOL_ADMIN', label: 'School Admin' },
 ];
 
+const MEMBERS_PAGE_SIZE = 12;
+
 const MembersPage = () => {
   const { organizationId } = useAuth();
-  const [members, setMembers] = useState([]);
-  const [invites, setInvites] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('members');
   const [inviteOpen, { open: openInvite, close: closeInvite }] = useDisclosure(false);
@@ -41,24 +42,65 @@ const MembersPage = () => {
     firstName: '', lastName: '', email: '', password: '', role: 'TEACHER',
   });
   const [view, setView] = useState('grid');
-  const [search, setSearch] = useState('');
 
-  const load = () => {
-    if (!organizationId) return;
-    setLoading(true);
-    Promise.all([
-      getMembers(organizationId, { limit: 100, search: '' }),
-      getInvites(organizationId, { limit: 100 }),
-    ])
-      .then(([membersData, invitesData]) => {
-        setMembers(membersData?.items ?? []);
-        setInvites(invitesData?.items ?? []);
-      })
-      .catch((err) => notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' }))
-      .finally(() => setLoading(false));
+  const fetchMembers = useCallback(async (params) => {
+    if (!organizationId) return emptyPaginated(params.limit);
+    try {
+      return await getMembers(organizationId, {
+        page: params.page,
+        limit: params.limit,
+        search: params.search,
+      });
+    } catch (err) {
+      notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
+      return emptyPaginated(params.limit);
+    }
+  }, [organizationId]);
+
+  const fetchInvites = useCallback(async (params) => {
+    if (!organizationId) return emptyPaginated(params.limit);
+    try {
+      return await getInvites(organizationId, {
+        page: params.page,
+        limit: params.limit,
+        search: params.search,
+      });
+    } catch (err) {
+      notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
+      return emptyPaginated(params.limit);
+    }
+  }, [organizationId]);
+
+  const {
+    items: members,
+    loading: membersLoading,
+    page: memberPage,
+    setPage: setMemberPage,
+    search: memberSearch,
+    setSearch: setMemberSearch,
+    meta: memberMeta,
+    reload: reloadMembers,
+    rangeStart: memberRangeStart,
+    rangeEnd: memberRangeEnd,
+  } = useServerList(fetchMembers, [organizationId], MEMBERS_PAGE_SIZE);
+
+  const {
+    items: invites,
+    loading: invitesLoading,
+    page: invitePage,
+    setPage: setInvitePage,
+    search: inviteSearch,
+    setSearch: setInviteSearch,
+    meta: inviteMeta,
+    reload: reloadInvites,
+    rangeStart: inviteRangeStart,
+    rangeEnd: inviteRangeEnd,
+  } = useServerList(fetchInvites, [organizationId], MEMBERS_PAGE_SIZE);
+
+  const reloadAll = () => {
+    reloadMembers();
+    reloadInvites();
   };
-
-  useEffect(() => { load(); }, [organizationId]);
 
   const handleInvite = async () => {
     setSubmitting(true);
@@ -67,7 +109,7 @@ const MembersPage = () => {
       notifications.show({ title: 'Sent', message: 'Invitation sent', color: 'green' });
       closeInvite();
       setInviteForm({ email: '', role: 'TEACHER' });
-      load();
+      reloadAll();
     } catch (err) {
       notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
     } finally {
@@ -82,7 +124,7 @@ const MembersPage = () => {
       notifications.show({ title: 'Added', message: 'Member added', color: 'green' });
       closeAdd();
       setAddForm({ firstName: '', lastName: '', email: '', password: '', role: 'TEACHER' });
-      load();
+      reloadAll();
     } catch (err) {
       notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
     } finally {
@@ -97,7 +139,7 @@ const MembersPage = () => {
       notifications.show({ title: 'Removed', message: 'Member removed', color: 'green' });
       closeConfirm();
       setPendingRemoveId(null);
-      load();
+      reloadAll();
     } catch (err) {
       notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
     }
@@ -107,25 +149,11 @@ const MembersPage = () => {
     try {
       await suspendMember(organizationId, userId, true);
       notifications.show({ title: 'Updated', message: 'Member suspended', color: 'green' });
-      load();
+      reloadMembers();
     } catch (err) {
       notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
     }
   };
-
-  const filteredMembers = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return members;
-    return members.filter((row) => ['firstName', 'lastName', 'email', 'role', 'status'].some((key) =>
-      String(row[key] ?? '').toLowerCase().includes(q)));
-  }, [members, search]);
-
-  const filteredInvites = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return invites;
-    return invites.filter((row) => ['email', 'role'].some((key) =>
-      String(row[key] ?? '').toLowerCase().includes(q)));
-  }, [invites, search]);
 
   if (!organizationId) return <EmptyOrgHint />;
 
@@ -188,9 +216,11 @@ const MembersPage = () => {
     },
   ];
 
+  const headerLoading = membersLoading && !members.length && invitesLoading && !invites.length;
+
   return (
     <>
-      {loading ? <PageHeaderSkeleton /> : (
+      {headerLoading ? <PageHeaderSkeleton /> : (
         <PageHeader
           title="Members"
           gradientWord="Members"
@@ -213,10 +243,10 @@ const MembersPage = () => {
       <Tabs value={activeTab} onChange={setActiveTab}>
         <Tabs.List className="mb-6 flex-wrap gap-1 rounded-xl border border-border/50 bg-card/50 p-1">
           <Tabs.Tab value="members" leftSection={<Users className="h-4 w-4" />}>
-            Members ({members.length})
+            Members ({memberMeta.total ?? 0})
           </Tabs.Tab>
           <Tabs.Tab value="invites" leftSection={<Mail className="h-4 w-4" />}>
-            Invitations ({invites.length})
+            Invitations ({inviteMeta.total ?? 0})
           </Tabs.Tab>
         </Tabs.List>
 
@@ -224,57 +254,76 @@ const MembersPage = () => {
           <ListGridToolbar
             view={view}
             onViewChange={setView}
-            search={search}
-            onSearchChange={setSearch}
+            search={memberSearch}
+            onSearchChange={setMemberSearch}
             searchPlaceholder="Search members…"
           />
           {view === 'grid' ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredMembers.length ? filteredMembers.map((row) => (
-                <GlassCard key={row.id || row._id} className="flex h-full flex-col p-5">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
-                    <Users className="h-5 w-5" />
-                  </div>
-                  <h3 className="font-display text-sm font-semibold text-foreground">
-                    {row.firstName} {row.lastName}
-                  </h3>
-                  <p className="mt-1 text-sm text-muted-foreground">{row.email}</p>
-                  <div className="mt-2 flex flex-wrap gap-2">
-                    <AdesiaBadge status="draft">{row.role}</AdesiaBadge>
-                    <AdesiaBadge status={row.status === 'ACTIVE' ? 'active' : 'draft'}>
-                      {row.status}
-                    </AdesiaBadge>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2">
-                    <button type="button" className="btn-outline !px-2 !py-1 text-xs" onClick={() => handleSuspend(row.id || row._id)}>
-                      Suspend
-                    </button>
-                    <button
-                      type="button"
-                      className="btn-danger !px-2 !py-1 text-xs"
-                      onClick={() => {
-                        setPendingRemoveId(row.id || row._id);
-                        openConfirm();
-                      }}
-                    >
-                      Remove
-                    </button>
-                  </div>
-                </GlassCard>
-              )) : (
-                <p className="col-span-full py-12 text-center text-muted-foreground">
-                  No members yet — invite your team to get started.
-                </p>
-              )}
+            <div className="glass-card overflow-hidden">
+              <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
+                {members.length ? members.map((row) => (
+                  <GlassCard key={row.id || row._id} className="flex h-full flex-col p-5">
+                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                      <Users className="h-5 w-5" />
+                    </div>
+                    <h3 className="font-display text-sm font-semibold text-foreground">
+                      {row.firstName} {row.lastName}
+                    </h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{row.email}</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <AdesiaBadge status="draft">{row.role}</AdesiaBadge>
+                      <AdesiaBadge status={row.status === 'ACTIVE' ? 'active' : 'draft'}>
+                        {row.status}
+                      </AdesiaBadge>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button type="button" className="btn-outline !px-2 !py-1 text-xs" onClick={() => handleSuspend(row.id || row._id)}>
+                        Suspend
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-danger !px-2 !py-1 text-xs"
+                        onClick={() => {
+                          setPendingRemoveId(row.id || row._id);
+                          openConfirm();
+                        }}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  </GlassCard>
+                )) : (
+                  <p className="col-span-full py-12 text-center text-muted-foreground">
+                    {membersLoading ? 'Loading members…' : 'No members yet — invite your team to get started.'}
+                  </p>
+                )}
+              </div>
+              <DataListFooter
+                rangeStart={memberRangeStart}
+                rangeEnd={memberRangeEnd}
+                totalItems={memberMeta.total ?? 0}
+                page={memberPage}
+                totalPages={memberMeta.totalPages ?? 1}
+                pageSize={MEMBERS_PAGE_SIZE}
+                onPageChange={setMemberPage}
+              />
             </div>
           ) : (
             <AdesiaDataTable
               title="Organization members"
               description="Active users with access to your Adesia workspace."
-              data={filteredMembers}
+              data={members}
               columns={memberColumns}
-              loading={loading}
-              pageSize={10}
+              loading={membersLoading}
+              pageSize={MEMBERS_PAGE_SIZE}
+              serverPagination
+              page={memberPage}
+              totalPages={memberMeta.totalPages ?? 1}
+              totalItems={memberMeta.total ?? 0}
+              rangeStart={memberRangeStart}
+              rangeEnd={memberRangeEnd}
+              onPageChange={setMemberPage}
+              paginate={false}
               emptyMessage="No members yet — invite your team to get started."
             />
           )}
@@ -284,37 +333,58 @@ const MembersPage = () => {
           <ListGridToolbar
             view={view}
             onViewChange={setView}
-            search={search}
-            onSearchChange={setSearch}
+            search={inviteSearch}
+            onSearchChange={setInviteSearch}
             searchPlaceholder="Search invites…"
           />
           {view === 'grid' ? (
-            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-              {filteredInvites.length ? filteredInvites.map((row) => (
-                <GlassCard key={row.id || row._id || row.email} className="p-5">
-                  <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
-                    <Mail className="h-5 w-5" />
-                  </div>
-                  <h3 className="font-display text-sm font-semibold text-foreground">{row.email}</h3>
-                  <div className="mt-2">
-                    <AdesiaBadge status="draft">{row.role}</AdesiaBadge>
-                  </div>
-                  <p className="mt-2 text-xs text-muted-foreground">
-                    Expires {formatDateShort(row.expiresAt)}
+            <div className="glass-card overflow-hidden">
+              <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
+                {invites.length ? invites.map((row) => (
+                  <GlassCard key={row.id || row._id || row.email} className="p-5">
+                    <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                      <Mail className="h-5 w-5" />
+                    </div>
+                    <h3 className="font-display text-sm font-semibold text-foreground">{row.email}</h3>
+                    <div className="mt-2">
+                      <AdesiaBadge status="draft">{row.role}</AdesiaBadge>
+                    </div>
+                    <p className="mt-2 text-xs text-muted-foreground">
+                      Expires {formatDateShort(row.expiresAt)}
+                    </p>
+                  </GlassCard>
+                )) : (
+                  <p className="col-span-full py-12 text-center text-muted-foreground">
+                    {invitesLoading ? 'Loading invites…' : 'No pending invites.'}
                   </p>
-                </GlassCard>
-              )) : (
-                <p className="col-span-full py-12 text-center text-muted-foreground">No pending invites.</p>
-              )}
+                )}
+              </div>
+              <DataListFooter
+                rangeStart={inviteRangeStart}
+                rangeEnd={inviteRangeEnd}
+                totalItems={inviteMeta.total ?? 0}
+                page={invitePage}
+                totalPages={inviteMeta.totalPages ?? 1}
+                pageSize={MEMBERS_PAGE_SIZE}
+                onPageChange={setInvitePage}
+              />
             </div>
           ) : (
             <AdesiaDataTable
               title="Pending invitations"
               description="Outstanding invites waiting to be accepted."
-              data={filteredInvites}
+              data={invites}
               columns={inviteColumns}
-              loading={loading}
-              pageSize={10}
+              loading={invitesLoading}
+              pageSize={MEMBERS_PAGE_SIZE}
+              serverPagination
+              page={invitePage}
+              totalPages={inviteMeta.totalPages ?? 1}
+              totalItems={inviteMeta.total ?? 0}
+              rangeStart={inviteRangeStart}
+              rangeEnd={inviteRangeEnd}
+              onPageChange={setInvitePage}
+              paginate={false}
               emptyMessage="No pending invites."
             />
           )}

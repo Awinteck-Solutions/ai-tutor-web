@@ -35,7 +35,7 @@ const LessonsPage = () => {
   const [opened, { open, close }] = useDisclosure(false);
   const [confirmOpen, { open: openConfirm, close: closeConfirm }] = useDisclosure(false);
   const [pendingDeleteId, setPendingDeleteId] = useState(null);
-  const [form, setForm] = useState({ title: '', materialIds: [], order: 0 });
+  const [form, setForm] = useState({ title: '', materialIds: [], order: 0, studentLevel: 'intermediate' });
   const [view, setView] = useState('grid');
 
   const fetchLessons = useCallback(async (params) => {
@@ -82,6 +82,7 @@ const LessonsPage = () => {
         materialIds: form.materialIds,
         title: form.title,
         order: form.order,
+        studentLevel: form.studentLevel,
         organizationId,
       });
       notifications.show({ title: 'Queued', message: 'Lesson generation started', color: 'green' });
@@ -314,6 +315,17 @@ const LessonsPage = () => {
             placeholder="Auto-generated if left blank"
             value={form.title}
             onChange={(e) => setForm({ ...form, title: e.target.value })}
+          />
+          <Select
+            label="Student level"
+            description="Target depth and vocabulary for the generated lesson."
+            data={[
+              { value: 'beginner', label: 'Beginner' },
+              { value: 'intermediate', label: 'Intermediate' },
+              { value: 'advanced', label: 'Advanced' },
+            ]}
+            value={form.studentLevel}
+            onChange={(value) => setForm({ ...form, studentLevel: value ?? 'intermediate' })}
           />
           <MultiSelect
             label="Source materials"

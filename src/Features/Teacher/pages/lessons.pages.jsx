@@ -34,7 +34,7 @@ const TeacherLessonsPage = () => {
   const [opened, { open, close }] = useDisclosure(false);
   const [sourcesOpen, { open: openSources, close: closeSources }] = useDisclosure(false);
   const [sources, setSources] = useState([]);
-  const [form, setForm] = useState({ title: '', materialIds: [] });
+  const [form, setForm] = useState({ title: '', materialIds: [], studentLevel: 'intermediate' });
   const [view, setView] = useState('grid');
 
   const fetchLessons = useCallback(async (params) => {
@@ -80,6 +80,7 @@ const TeacherLessonsPage = () => {
         topicId,
         materialIds: form.materialIds,
         title: form.title,
+        studentLevel: form.studentLevel,
         organizationId,
       });
       notifications.show({ title: 'Queued', message: 'Lesson generation started', color: 'green' });
@@ -268,6 +269,17 @@ const TeacherLessonsPage = () => {
           <Select label="Subject" searchable data={subjects.map((s) => ({ value: s.id || s._id, label: s.name }))} onChange={loadTopicsForSubject} />
           <Select label="Topic" searchable data={topics.map((t) => ({ value: t.id || t._id, label: t.name }))} value={topicId} onChange={loadMaterialsForTopic} />
           <TextInput label="Title (optional)" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          <Select
+            label="Student level"
+            description="Target depth and vocabulary for the generated lesson."
+            data={[
+              { value: 'beginner', label: 'Beginner' },
+              { value: 'intermediate', label: 'Intermediate' },
+              { value: 'advanced', label: 'Advanced' },
+            ]}
+            value={form.studentLevel}
+            onChange={(value) => setForm({ ...form, studentLevel: value ?? 'intermediate' })}
+          />
           <MultiSelect
             label="Materials"
             description="Select 1–10 completed materials"

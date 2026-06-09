@@ -42,6 +42,7 @@ import {
   addMaterialsToPersonalLesson,
   createPersonalLesson,
   createPersonalLessonFromMaterials,
+  deletePersonalLesson,
   deleteSelfStudyMaterial,
   generateLessonFlashcards,
   generateLessonQuiz,
@@ -50,15 +51,24 @@ import {
   regeneratePersonalLesson,
   listPersonalLessons,
   listSelfStudyMaterials,
+  listLessonGroups,
   uploadSelfStudyPdf,
   uploadSelfStudyText,
   uploadSelfStudyYoutube,
 } from '../services/student.services';
+import LessonGroupManager from '../components/LessonGroupManager';
+import ContinueLearningCard from '../components/ContinueLearningCard';
 
 const DIFFICULTIES = [
   { value: 'easy', label: 'Easy' },
   { value: 'medium', label: 'Medium' },
   { value: 'hard', label: 'Hard' },
+];
+
+const STUDENT_LEVEL_OPTIONS = [
+  { value: 'beginner', label: 'Beginner' },
+  { value: 'intermediate', label: 'Intermediate' },
+  { value: 'advanced', label: 'Advanced' },
 ];
 
 const COUNT_OPTIONS = [
@@ -143,15 +153,21 @@ const SelfLearnPage = () => {
   const [createMode, setCreateMode] = useState(null);
   const [title, setTitle] = useState('');
   const [prompt, setPrompt] = useState('');
+  const [studentLevel, setStudentLevel] = useState('intermediate');
   const [selectedMaterialIds, setSelectedMaterialIds] = useState([]);
 
   const [retryOpen, { open: openRetry, close: closeRetry }] = useDisclosure(false);
   const [retryPrompt, setRetryPrompt] = useState('');
+  const [retryStudentLevel, setRetryStudentLevel] = useState('intermediate');
   const [reprocessing, setReprocessing] = useState(false);
 
   const [deleteOpen, { open: openDelete, close: closeDelete }] = useDisclosure(false);
   const [materialToDelete, setMaterialToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
+
+  const [deleteLessonOpen, { open: openDeleteLesson, close: closeDeleteLesson }] = useDisclosure(false);
+  const [lessonToDelete, setLessonToDelete] = useState(null);
+  const [deletingLesson, setDeletingLesson] = useState(false);
 
   const [addMaterialsOpen, { open: openAddMaterials, close: closeAddMaterials }] = useDisclosure(false);
   const [addMaterialIds, setAddMaterialIds] = useState([]);
@@ -167,6 +183,8 @@ const SelfLearnPage = () => {
   const [textForm, setTextForm] = useState({ title: '', content: '', description: '' });
   const [youtubeForm, setYoutubeForm] = useState({ title: '', url: '', description: '' });
   const [subscription, setSubscription] = useState(null);
+  const [lessonGroups, setLessonGroups] = useState([]);
+  const [createGroupId, setCreateGroupId] = useState('');
 
   const reloadSubscription = useCallback(() => {
     if (!organizationId) return;
@@ -176,6 +194,16 @@ const SelfLearnPage = () => {
   useEffect(() => {
     reloadSubscription();
   }, [reloadSubscription]);
+
+  const reloadGroups = useCallback(() => {
+    listLessonGroups(organizationId)
+      .then((data) => setLessonGroups(data?.groups ?? []))
+      .catch(() => setLessonGroups([]));
+  }, [organizationId]);
+
+  useEffect(() => {
+    reloadGroups();
+  }, [reloadGroups]);
 
   const fetchLessons = useCallback(async (params) => {
     if (!organizationId) {
@@ -189,6 +217,9 @@ const SelfLearnPage = () => {
       };
       if (params.generationStatus && params.generationStatus !== 'all') {
         query.generationStatus = params.generationStatus;
+      }
+      if (params.groupId && params.groupId !== 'all') {
+        query.groupId = params.groupId;
       }
       return await listPersonalLessons(organizationId, query);
     } catch (err) {
@@ -288,12 +319,13 @@ const SelfLearnPage = () => {
   const lessonGenerating = ['PENDING', 'QUEUED', 'PROCESSING'].includes(
     status?.lesson?.generationStatus,
   );
-  const runRegenerate = async (promptText) => {
+  const runRegenerate = async (promptText, level = retryStudentLevel) => {
     if (!organizationId || !activeLesson?.id) return;
     const fromMaterials = status?.lesson?.hasSourceMaterials;
     setReprocessing(true);
     try {
-      const payload = promptText?.trim() ? { prompt: promptText.trim() } : {};
+      const payload = { studentLevel: level };
+      if (promptText?.trim()) payload.prompt = promptText.trim();
       await regeneratePersonalLesson(organizationId, activeLesson.id, payload);
       notifications.show({
         title: fromMaterials ? 'Rebuild started' : 'Lesson ready',
@@ -315,20 +347,18 @@ const SelfLearnPage = () => {
     }
   };
 
-  const handleRetryLesson = () => {
-    if (status?.lesson?.hasSourceMaterials) {
-      runRegenerate();
-      return;
-    }
+  const openRegenerateModal = () => {
+    setRetryPrompt('');
+    setRetryStudentLevel(status?.lesson?.studentLevel ?? 'intermediate');
     openRetry();
   };
 
+  const handleRetryLesson = () => {
+    openRegenerateModal();
+  };
+
   const handleRebuildLesson = () => {
-    if (status?.lesson?.hasSourceMaterials) {
-      runRegenerate();
-      return;
-    }
-    openRetry();
+    openRegenerateModal();
   };
 
   const linkedMaterialIds = useMemo(
@@ -386,6 +416,35 @@ const SelfLearnPage = () => {
     openDelete();
   };
 
+  const confirmDeleteLesson = (lesson, event) => {
+    event?.stopPropagation?.();
+    event?.preventDefault?.();
+    setLessonToDelete(lesson);
+    openDeleteLesson();
+  };
+
+  const handleDeleteLesson = async () => {
+    if (!organizationId || !lessonToDelete?.id) return;
+    setDeletingLesson(true);
+    try {
+      await deletePersonalLesson(organizationId, lessonToDelete.id);
+      notifications.show({ title: 'Deleted', message: 'Your lesson was removed.', color: 'green' });
+      closeDeleteLesson();
+      setLessonToDelete(null);
+      if (activeLesson?.id === lessonToDelete.id) {
+        setActiveLesson(null);
+        setStatus(null);
+      }
+      reloadLessons();
+      reloadGroups();
+      reloadSubscription();
+    } catch (err) {
+      notifications.show({ title: 'Could not delete', message: getErrorMessage(err), color: 'red' });
+    } finally {
+      setDeletingLesson(false);
+    }
+  };
+
   const handleDeleteMaterial = async () => {
     if (!organizationId || !materialToDelete?.id) return;
     setDeleting(true);
@@ -415,7 +474,11 @@ const SelfLearnPage = () => {
     setCreateMode(null);
     setTitle('');
     setPrompt('');
+    setStudentLevel('intermediate');
     setSelectedMaterialIds([]);
+    setCreateGroupId(lessonFilters.groupId && lessonFilters.groupId !== 'all'
+      ? lessonFilters.groupId
+      : '');
   };
 
   const handleCreatePrompt = async () => {
@@ -428,8 +491,14 @@ const SelfLearnPage = () => {
       const lesson = await createPersonalLesson(organizationId, {
         title: title.trim() || undefined,
         prompt: prompt.trim(),
+        studentLevel,
+        groupId: createGroupId || undefined,
       });
-      notifications.show({ title: 'Done!', message: 'Your lesson is ready.', color: 'green' });
+      notifications.show({
+        title: 'Done!',
+        message: 'Your lesson is ready. Flashcards and a quiz are being prepared.',
+        color: 'green',
+      });
       reloadLessons();
       reloadSubscription();
       closeCreate();
@@ -454,6 +523,8 @@ const SelfLearnPage = () => {
       const lesson = await createPersonalLessonFromMaterials(organizationId, {
         title: title.trim() || undefined,
         materialIds: ids,
+        studentLevel,
+        groupId: createGroupId || undefined,
       });
       notifications.show({ title: 'Building lesson', message: 'This may take a minute.', color: 'blue' });
       reloadLessons();
@@ -578,6 +649,14 @@ const SelfLearnPage = () => {
             {status?.lesson?.generationStatus && (
               <StatusBadge status={status.lesson.generationStatus} />
             )}
+            <GhostButton
+              type="button"
+              className="!px-3 !py-2 text-sm text-red-600 hover:text-red-700"
+              onClick={() => confirmDeleteLesson(activeLesson)}
+            >
+              <Trash2 className="mr-2 inline h-4 w-4" />
+              Delete lesson
+            </GhostButton>
           </div>
 
           {lessonFailed && (
@@ -682,6 +761,28 @@ const SelfLearnPage = () => {
 
         {!lessonFailed && (
         <>
+        {lessonReady && (
+          <div className="mb-6 space-y-4">
+            <ContinueLearningCard
+              organizationId={organizationId}
+              lessonId={activeLesson.id}
+              lesson={{ ...status.lesson, isPersonal: true }}
+              nextSuggestion={status?.lesson?.nextLessonSuggestion}
+            />
+            <LessonGroupManager
+              organizationId={organizationId}
+              lessonId={activeLesson.id}
+              currentGroupId={status?.lesson?.groupId}
+              compact
+              onChanged={() => {
+                pollStatus(activeLesson.id);
+                reloadGroups();
+                reloadLessons();
+              }}
+            />
+          </div>
+        )}
+
         <p className="mb-3 text-sm font-medium text-muted-foreground">What do you want to do?</p>
         <div className="mb-6 grid gap-3 sm:grid-cols-2">
           <ActionCard
@@ -805,21 +906,38 @@ const SelfLearnPage = () => {
         <AdesiaModal
           opened={retryOpen}
           onClose={closeRetry}
-          title="Regenerate lesson"
+          title={status?.lesson?.hasSourceMaterials ? 'Rebuild lesson' : 'Regenerate lesson'}
           size="md"
-          submitLabel="Regenerate lesson"
-          onSubmit={() => runRegenerate(retryPrompt)}
+          submitLabel={status?.lesson?.hasSourceMaterials ? 'Rebuild lesson' : 'Regenerate lesson'}
+          onSubmit={() => runRegenerate(retryPrompt, retryStudentLevel)}
           submitting={reprocessing}
-          submitDisabled={retryPrompt.trim().length < 10}
+          submitDisabled={
+            !status?.lesson?.hasSourceMaterials && retryPrompt.trim().length < 10
+          }
         >
-          <Textarea
-            label="What should this lesson cover?"
-            placeholder="I want to learn about…"
-            value={retryPrompt}
-            onChange={(e) => setRetryPrompt(e.currentTarget.value)}
-            minRows={5}
-            autosize
-          />
+          <div className="space-y-4">
+            <Select
+              label="Student level"
+              description="Adjust depth and vocabulary for the regenerated lesson."
+              data={STUDENT_LEVEL_OPTIONS}
+              value={retryStudentLevel}
+              onChange={(value) => setRetryStudentLevel(value ?? 'intermediate')}
+            />
+            {status?.lesson?.hasSourceMaterials ? (
+              <p className="text-sm text-muted-foreground">
+                Your lesson will be rebuilt from the linked source materials at the selected level.
+              </p>
+            ) : (
+              <Textarea
+                label="What should this lesson cover?"
+                placeholder="I want to learn about…"
+                value={retryPrompt}
+                onChange={(e) => setRetryPrompt(e.currentTarget.value)}
+                minRows={5}
+                autosize
+              />
+            )}
+          </div>
         </AdesiaModal>
 
         <AdesiaModal
@@ -867,6 +985,22 @@ const SelfLearnPage = () => {
                 ))}
             </div>
           )}
+        </AdesiaModal>
+
+        <AdesiaModal
+          opened={deleteLessonOpen}
+          onClose={() => { closeDeleteLesson(); setLessonToDelete(null); }}
+          title="Delete lesson?"
+          size="sm"
+          submitLabel="Delete permanently"
+          onSubmit={handleDeleteLesson}
+          submitting={deletingLesson}
+        >
+          <p className="text-sm text-muted-foreground">
+            {lessonToDelete?.title
+              ? `Delete "${lessonToDelete.title}"? Flashcards, quizzes, and chat history for this lesson will be removed. This cannot be undone.`
+              : 'Delete this lesson? This cannot be undone.'}
+          </p>
         </AdesiaModal>
       </>
     );
@@ -949,6 +1083,25 @@ const SelfLearnPage = () => {
         </Tabs.List>
 
         <Tabs.Panel value="lessons">
+          <div className="grid gap-6 lg:grid-cols-[minmax(240px,280px)_1fr]">
+            <LessonGroupManager
+              organizationId={organizationId}
+              onChanged={() => {
+                reloadGroups();
+                reloadLessons();
+              }}
+              onGroupSelect={(groupId) => setLessonFilters({
+                ...lessonFilters,
+                groupId: groupId ?? 'all',
+              })}
+              selectedGroupFilter={
+                lessonFilters.groupId && lessonFilters.groupId !== 'all'
+                  ? lessonFilters.groupId
+                  : null
+              }
+            />
+
+            <div>
           <ListGridToolbar
             search={lessonSearch}
             onSearchChange={setLessonSearch}
@@ -956,10 +1109,22 @@ const SelfLearnPage = () => {
             showSearch
           >
             <Select
+              label="Collection"
+              data={[
+                { value: 'all', label: 'All collections' },
+                { value: 'ungrouped', label: 'Ungrouped' },
+                ...lessonGroups.map((g) => ({ value: g.id, label: g.title })),
+              ]}
+              value={lessonFilters.groupId ?? 'all'}
+              onChange={(v) => setLessonFilters({ ...lessonFilters, groupId: v ?? 'all' })}
+              className="w-44"
+              size="sm"
+            />
+            <Select
               label="Status"
               data={GENERATION_STATUS_OPTIONS}
               value={lessonFilters.generationStatus ?? 'all'}
-              onChange={(v) => setLessonFilters({ generationStatus: v ?? 'all' })}
+              onChange={(v) => setLessonFilters({ ...lessonFilters, generationStatus: v ?? 'all' })}
               className="w-44"
               size="sm"
             />
@@ -982,28 +1147,42 @@ const SelfLearnPage = () => {
                 <ul className="grid gap-3 p-3 sm:grid-cols-2">
                   {lessons.map((l) => (
                     <li key={l.id}>
-                      <button
-                        type="button"
-                        onClick={() => { setActiveLesson(l); pollStatus(l.id); }}
-                        className="flex w-full items-center gap-3 rounded-xl border border-border/50 bg-card/40 p-4 text-left transition hover:border-primary/30 hover:bg-primary/5"
-                      >
-                        <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
-                          <BookOpen className="h-5 w-5 text-primary" />
-                        </div>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate font-display font-semibold text-foreground">{l.title}</p>
-                          {l.generationStatus === 'FAILED' && (
-                            <p className="mt-0.5 text-xs font-medium text-red-500">Failed — tap to retry</p>
-                          )}
-                          {l.generationStatus && !['COMPLETED', 'FAILED'].includes(l.generationStatus) && (
-                            <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                              <Loader2 className="h-3 w-3 animate-spin" />
-                              Preparing…
-                            </p>
-                          )}
-                        </div>
-                        <ChevronDown className="h-4 w-4 shrink-0 -rotate-90 text-muted-foreground" />
-                      </button>
+                      <div className="relative">
+                        <button
+                          type="button"
+                          onClick={() => { setActiveLesson(l); pollStatus(l.id); }}
+                          className="flex w-full items-center gap-3 rounded-xl border border-border/50 bg-card/40 p-4 pr-12 text-left transition hover:border-primary/30 hover:bg-primary/5"
+                        >
+                          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                            <BookOpen className="h-5 w-5 text-primary" />
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate font-display font-semibold text-foreground">{l.title}</p>
+                            {l.groupTitle && (
+                              <p className="mt-0.5 truncate text-xs text-primary">{l.groupTitle}</p>
+                            )}
+                            {l.generationStatus === 'FAILED' && (
+                              <p className="mt-0.5 text-xs font-medium text-red-500">Failed — tap to retry</p>
+                            )}
+                            {l.generationStatus && !['COMPLETED', 'FAILED'].includes(l.generationStatus) && (
+                              <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                Preparing…
+                              </p>
+                            )}
+                          </div>
+                          <ChevronDown className="h-4 w-4 shrink-0 -rotate-90 text-muted-foreground" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={(e) => confirmDeleteLesson(l, e)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500"
+                          title="Delete lesson"
+                          aria-label={`Delete ${l.title}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -1019,6 +1198,8 @@ const SelfLearnPage = () => {
               </div>
             </>
           )}
+            </div>
+          </div>
         </Tabs.Panel>
 
         <Tabs.Panel value="materials">
@@ -1161,6 +1342,26 @@ const SelfLearnPage = () => {
               value={title}
               onChange={(e) => setTitle(e.currentTarget.value)}
             />
+            <Select
+              label="Student level"
+              description="Choose how deep and technical the lesson should be."
+              data={STUDENT_LEVEL_OPTIONS}
+              value={studentLevel}
+              onChange={(value) => setStudentLevel(value ?? 'intermediate')}
+            />
+            {lessonGroups.length > 0 && (
+              <Select
+                label="Collection (optional)"
+                description="Add this lesson to a learning path."
+                data={[
+                  { value: '', label: 'No collection' },
+                  ...lessonGroups.map((g) => ({ value: g.id, label: g.title })),
+                ]}
+                value={createGroupId}
+                onChange={(value) => setCreateGroupId(value ?? '')}
+                clearable
+              />
+            )}
             <Textarea
               label="What should this lesson cover?"
               placeholder="I want to learn about…"
@@ -1180,6 +1381,25 @@ const SelfLearnPage = () => {
               value={title}
               onChange={(e) => setTitle(e.currentTarget.value)}
             />
+            <Select
+              label="Student level"
+              description="Choose how deep and technical the lesson should be."
+              data={STUDENT_LEVEL_OPTIONS}
+              value={studentLevel}
+              onChange={(value) => setStudentLevel(value ?? 'intermediate')}
+            />
+            {lessonGroups.length > 0 && (
+              <Select
+                label="Collection (optional)"
+                data={[
+                  { value: '', label: 'No collection' },
+                  ...lessonGroups.map((g) => ({ value: g.id, label: g.title })),
+                ]}
+                value={createGroupId}
+                onChange={(value) => setCreateGroupId(value ?? '')}
+                clearable
+              />
+            )}
             {readyMaterials.length === 0 ? (
               <div className="rounded-lg border border-dashed border-border/60 py-8 text-center text-sm text-muted-foreground">
                 <p>No files ready yet.</p>
@@ -1289,6 +1509,22 @@ const SelfLearnPage = () => {
             </div>
           </Tabs.Panel>
         </Tabs>
+      </AdesiaModal>
+
+      <AdesiaModal
+        opened={deleteLessonOpen}
+        onClose={() => { closeDeleteLesson(); setLessonToDelete(null); }}
+        title="Delete lesson?"
+        size="sm"
+        submitLabel="Delete permanently"
+        onSubmit={handleDeleteLesson}
+        submitting={deletingLesson}
+      >
+        <p className="text-sm text-muted-foreground">
+          {lessonToDelete?.title
+            ? `Delete "${lessonToDelete.title}"? Flashcards, quizzes, and chat history for this lesson will be removed. This cannot be undone.`
+            : 'Delete this lesson? This cannot be undone.'}
+        </p>
       </AdesiaModal>
 
       <AdesiaModal

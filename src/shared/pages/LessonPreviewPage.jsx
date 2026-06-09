@@ -17,6 +17,8 @@ import { GradientButton } from '../components/GradientButton';
 import { formatDateTime, getErrorMessage } from '../utils/formatters';
 import NotesPanel from '../../Features/Student/components/NotesPanel';
 import LessonPracticePanel from '../../Features/Student/components/LessonPracticePanel';
+import ContinueLearningCard from '../../Features/Student/components/ContinueLearningCard';
+import LessonGroupManager from '../../Features/Student/components/LessonGroupManager';
 import {
   completeLesson,
   getLessonDetail,
@@ -211,6 +213,40 @@ const LessonPreviewPage = () => {
           {lesson.isPersonal && (
             <AdesiaBadge status="draft">Self-learn</AdesiaBadge>
           )}
+          {lesson.studentLevel && (
+            <AdesiaBadge status="draft">
+              {lesson.studentLevel.charAt(0).toUpperCase() + lesson.studentLevel.slice(1)}
+            </AdesiaBadge>
+          )}
+          {lesson.groupTitle && (
+            <AdesiaBadge status="draft">{lesson.groupTitle}</AdesiaBadge>
+          )}
+        </div>
+      )}
+
+      {isStudent && !loading && lesson?.isPersonal && (
+        <div className="mb-6 space-y-4">
+          <ContinueLearningCard
+            organizationId={organizationId}
+            lessonId={lessonId}
+            lesson={lesson}
+            nextSuggestion={lesson.nextLessonSuggestion}
+          />
+          <LessonGroupManager
+            organizationId={organizationId}
+            lessonId={lessonId}
+            currentGroupId={lesson.groupId}
+            compact
+            onChanged={load}
+          />
+        </div>
+      )}
+
+      {!isStudent && !loading && lesson?.studentLevel && (
+        <div className="mb-4 flex flex-wrap gap-2">
+          <AdesiaBadge status="draft">
+            {lesson.studentLevel.charAt(0).toUpperCase() + lesson.studentLevel.slice(1)} level
+          </AdesiaBadge>
         </div>
       )}
 

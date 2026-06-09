@@ -10,10 +10,13 @@ import { teacherRoutes } from './Features/Teacher/routes/teacher.routes';
 import { studentRoutes } from './Features/Student/routes/student.routes';
 import ProtectedRoute from './shared/components/ProtectedRoute';
 import AdminLayout from './shared/layouts/AdminLayout';
+import PlatformLayout from './shared/layouts/PlatformLayout';
 import TeacherLayout from './shared/layouts/TeacherLayout';
 import StudentLayout from './shared/layouts/StudentLayout';
+import { platformRoutes } from './Features/Platform/routes/platform.routes';
 import { ForbiddenPage, NotFoundPage } from './shared/components/PageShell';
 import { useAuth } from './shared/context/AuthContext';
+import VisitTracker from './shared/components/VisitTracker';
 
 const RootRedirect = () => {
   const { user, loading, getPortalPath } = useAuth();
@@ -25,6 +28,7 @@ const RootRedirect = () => {
 function App() {
   return (
     <Router>
+      <VisitTracker />
       <Routes>
         <Route path="/" element={<RootRedirect />} />
         <Route path="/marketing" element={<MarketingPage />} />
@@ -34,6 +38,12 @@ function App() {
         <Route path="/organizations/invites/accept" element={<AcceptInvitePage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
         <Route path="/forbidden" element={<ForbiddenPage />} />
+
+        <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']} />}>
+          <Route path="/platform" element={<PlatformLayout />}>
+            {platformRoutes}
+          </Route>
+        </Route>
 
         <Route element={<ProtectedRoute allowedRoles={['SCHOOL_ADMIN', 'SUPER_ADMIN']} />}>
           <Route path="/admin" element={<AdminLayout />}>

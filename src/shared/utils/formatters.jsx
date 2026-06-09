@@ -126,6 +126,12 @@ export const unwrapPaginated = (response) => {
   };
 };
 
+/** Empty paginated result for skipped server fetches. */
+export const emptyPaginated = (limit = 10) => ({
+  items: [],
+  meta: { total: 0, totalPages: 1, page: 1, limit },
+});
+
 export const getErrorMessage = (error, fallback = 'Something went wrong') =>
   error?.response?.data?.message || error?.message || fallback;
 

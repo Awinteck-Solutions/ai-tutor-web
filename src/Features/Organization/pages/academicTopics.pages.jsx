@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { NumberInput, Select, TextInput } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -8,52 +8,84 @@ import { PageHeader } from '../../../shared/components/PageShell';
 import { EmptyOrgHint } from '../../../shared/components/PageLoader';
 import { PageHeaderSkeleton } from '../../../shared/components/TableSkeleton';
 import AdesiaDataTable from '../../../shared/components/AdesiaDataTable';
+import DataListFooter from '../../../shared/components/DataListFooter';
 import ListGridToolbar from '../../../shared/components/ListGridToolbar';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { AdesiaModal } from '../../../shared/components/AdesiaModal';
 import { GradientButton } from '../../../shared/components/GradientButton';
-import { getErrorMessage } from '../../../shared/utils/formatters';
-import { createTopic, getSubjects, getTopics } from '../services/organization.services';
+import { useServerList } from '../../../shared/hooks/useServerList';
+import { emptyPaginated, getErrorMessage } from '../../../shared/utils/formatters';
+import {
+  createTopic,
+  getSubjectsList,
+  getTopics,
+} from '../services/organization.services';
+
+const TOPICS_PAGE_SIZE = 12;
 
 const AcademicTopicsPage = () => {
   const { organizationId } = useAuth();
   const [subjects, setSubjects] = useState([]);
   const [subjectId, setSubjectId] = useState(null);
   const [subjectName, setSubjectName] = useState('');
-  const [topics, setTopics] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [topicsLoading, setTopicsLoading] = useState(false);
+  const [subjectsLoading, setSubjectsLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
   const [form, setForm] = useState({ name: '', description: '', order: 1 });
   const [view, setView] = useState('grid');
-  const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (!organizationId) { setLoading(false); return; }
-    getSubjects(organizationId, { limit: 100 })
-      .then((data) => {
-        const list = data?.items ?? [];
-        setSubjects(list);
-        if (list.length) {
-          const first = list[0];
+    if (!organizationId) {
+      setSubjectsLoading(false);
+      return;
+    }
+    getSubjectsList(organizationId)
+      .then((list) => {
+        const items = Array.isArray(list) ? list : [];
+        setSubjects(items);
+        if (items.length) {
+          const first = items[0];
           const id = first.id || first._id;
           setSubjectId(id);
           setSubjectName(first.name);
         }
       })
       .catch((err) => notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' }))
-      .finally(() => setLoading(false));
+      .finally(() => setSubjectsLoading(false));
   }, [organizationId]);
 
+  const fetchTopics = useCallback(async (params) => {
+    const sid = params.subjectId;
+    if (!organizationId || !sid) return emptyPaginated(params.limit);
+    try {
+      return await getTopics(organizationId, sid, {
+        page: params.page,
+        limit: params.limit,
+        search: params.search,
+      });
+    } catch (err) {
+      notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
+      return emptyPaginated(params.limit);
+    }
+  }, [organizationId]);
+
+  const {
+    items: topics,
+    loading: topicsLoading,
+    page,
+    setPage,
+    search,
+    setSearch,
+    meta,
+    reload: reloadTopics,
+    setFilters,
+    rangeStart,
+    rangeEnd,
+  } = useServerList(fetchTopics, [organizationId, subjectId], TOPICS_PAGE_SIZE);
+
   useEffect(() => {
-    if (!organizationId || !subjectId) return;
-    setTopicsLoading(true);
-    getTopics(organizationId, subjectId, { limit: 200 })
-      .then((data) => setTopics(data?.items ?? []))
-      .catch((err) => notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' }))
-      .finally(() => setTopicsLoading(false));
-  }, [organizationId, subjectId]);
+    setFilters({ subjectId: subjectId || undefined });
+  }, [subjectId, setFilters]);
 
   const handleCreate = async () => {
     setSubmitting(true);
@@ -66,21 +98,14 @@ const AcademicTopicsPage = () => {
       });
       notifications.show({ title: 'Created', message: 'Topic created', color: 'green' });
       close();
-      setForm({ name: '', description: '', order: topics.length + 1 });
-      const data = await getTopics(organizationId, subjectId, { limit: 200 });
-      setTopics(data?.items ?? []);
+      setForm({ name: '', description: '', order: (meta.total ?? topics.length) + 1 });
+      reloadTopics();
     } catch (err) {
       notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
     } finally {
       setSubmitting(false);
     }
   };
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return topics;
-    return topics.filter((t) => [t.name, t.description].some((v) => v?.toLowerCase().includes(q)));
-  }, [topics, search]);
 
   if (!organizationId) return <EmptyOrgHint />;
 
@@ -102,7 +127,7 @@ const AcademicTopicsPage = () => {
 
   return (
     <>
-      {loading ? <PageHeaderSkeleton /> : (
+      {subjectsLoading ? <PageHeaderSkeleton /> : (
         <PageHeader
           title="Topics"
           gradientWord="Topics"
@@ -143,32 +168,51 @@ const AcademicTopicsPage = () => {
       />
 
       {view === 'grid' ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.length ? filtered.map((t) => (
-            <GlassCard key={t.id || t._id} className="p-6">
-              <div className="mb-3 flex items-center justify-between">
-                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
-                  <Layers className="h-5 w-5" />
+        <div className="glass-card overflow-hidden">
+          <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
+            {topics.length ? topics.map((t) => (
+              <GlassCard key={t.id || t._id} className="p-6">
+                <div className="mb-3 flex items-center justify-between">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/15 text-primary">
+                    <Layers className="h-5 w-5" />
+                  </div>
+                  <span className="text-xs text-muted-foreground">#{t.order ?? '—'}</span>
                 </div>
-                <span className="text-xs text-muted-foreground">#{t.order ?? '—'}</span>
-              </div>
-              <h3 className="font-display font-semibold text-foreground">{t.name}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{t.description || '—'}</p>
-            </GlassCard>
-          )) : (
-            <p className="col-span-full py-12 text-center text-muted-foreground">
-              {subjectId ? 'No topics yet for this subject.' : 'Select a subject above.'}
-            </p>
-          )}
+                <h3 className="font-display font-semibold text-foreground">{t.name}</h3>
+                <p className="mt-1 text-sm text-muted-foreground">{t.description || '—'}</p>
+              </GlassCard>
+            )) : (
+              <p className="col-span-full py-12 text-center text-muted-foreground">
+                {topicsLoading ? 'Loading topics…' : subjectId ? 'No topics yet for this subject.' : 'Select a subject above.'}
+              </p>
+            )}
+          </div>
+          <DataListFooter
+            rangeStart={rangeStart}
+            rangeEnd={rangeEnd}
+            totalItems={meta.total ?? 0}
+            page={page}
+            totalPages={meta.totalPages ?? 1}
+            pageSize={TOPICS_PAGE_SIZE}
+            onPageChange={setPage}
+          />
         </div>
       ) : (
         <AdesiaDataTable
           title={subjectName ? `Topics in ${subjectName}` : 'Topics'}
           description="Topics define the learning units teachers build materials and lessons from."
-          data={filtered}
+          data={topics}
           columns={columns}
-          loading={loading || topicsLoading}
-          pageSize={12}
+          loading={topicsLoading || subjectsLoading}
+          pageSize={TOPICS_PAGE_SIZE}
+          serverPagination
+          page={page}
+          totalPages={meta.totalPages ?? 1}
+          totalItems={meta.total ?? 0}
+          rangeStart={rangeStart}
+          rangeEnd={rangeEnd}
+          onPageChange={setPage}
+          paginate={false}
           emptyMessage={subjectId ? 'No topics yet for this subject.' : 'Select a subject above.'}
         />
       )}
@@ -197,7 +241,7 @@ const AcademicTopicsPage = () => {
             onChange={(e) => setForm({ ...form, description: e.target.value })}
           />
           <NumberInput
-            label="Display order"
+            label="Order"
             min={1}
             value={form.order}
             onChange={(v) => setForm({ ...form, order: Number(v) || 1 })}

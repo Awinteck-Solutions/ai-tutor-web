@@ -1,15 +1,45 @@
 const renderInline = (text) => {
-  const parts = text.split(/(\*\*[^*]+\*\*)/g);
-  return parts.map((part, i) => {
-    if (part.startsWith('**') && part.endsWith('**')) {
-      return <strong key={i}>{part.slice(2, -2)}</strong>;
+  const pattern = /(\*\*[^*]+\*\*|\*[^*]+\*)/g;
+  const nodes = [];
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+
+  while ((match = pattern.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      nodes.push(text.slice(lastIndex, match.index));
     }
-    return part;
-  });
+    const token = match[0];
+    if (token.startsWith('**')) {
+      nodes.push(<strong key={key++}>{token.slice(2, -2)}</strong>);
+    } else {
+      nodes.push(<em key={key++}>{token.slice(1, -1)}</em>);
+    }
+    lastIndex = pattern.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    nodes.push(text.slice(lastIndex));
+  }
+
+  return nodes.length ? nodes : text;
 };
 
-const MarkdownContent = ({ content, className = '' }) => {
+const toneClasses = {
+  default: {
+    paragraph: 'text-sm leading-relaxed text-muted-foreground',
+    list: 'list-disc space-y-1 pl-5 text-sm text-muted-foreground',
+  },
+  chat: {
+    paragraph: 'text-sm leading-relaxed text-foreground',
+    list: 'list-disc space-y-1 pl-5 text-sm text-foreground',
+  },
+};
+
+const MarkdownContent = ({ content, className = '', variant = 'default' }) => {
   if (!content?.trim()) return null;
+
+  const tone = toneClasses[variant] ?? toneClasses.default;
 
   const lines = content.split('\n');
   const blocks = [];
@@ -19,7 +49,7 @@ const MarkdownContent = ({ content, className = '' }) => {
   const flushParagraph = () => {
     if (paragraph.length) {
       blocks.push(
-        <p key={`p-${blocks.length}`} className="text-sm leading-relaxed text-muted-foreground">
+        <p key={`p-${blocks.length}`} className={tone.paragraph}>
           {renderInline(paragraph.join(' '))}
         </p>,
       );
@@ -30,7 +60,7 @@ const MarkdownContent = ({ content, className = '' }) => {
   const flushList = () => {
     if (listItems.length) {
       blocks.push(
-        <ul key={`ul-${blocks.length}`} className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
+        <ul key={`ul-${blocks.length}`} className={tone.list}>
           {listItems.map((item, i) => (
             <li key={i}>{renderInline(item)}</li>
           ))}

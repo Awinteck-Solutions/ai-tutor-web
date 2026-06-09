@@ -26,9 +26,10 @@ export const GradientButton = ({ children, className = '', to, href, type = 'but
   );
 };
 
-export const GhostButton = ({ children, className = '', to, ...props }) => {
+export const GhostButton = ({ children, className = '', to, href, ...props }) => {
   const classes = `btn-ghost ${className}`;
   if (to) return <Link to={to} className={classes} {...props}>{children}</Link>;
+  if (href) return <a href={href} className={classes} {...props}>{children}</a>;
   return <button type="button" className={classes} {...props}>{children}</button>;
 };
 

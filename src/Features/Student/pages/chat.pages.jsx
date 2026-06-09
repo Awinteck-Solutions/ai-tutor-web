@@ -22,7 +22,7 @@ const StudentChatPage = () => {
       <PageHeader
         title="AI Tutor"
         gradientWord="Tutor"
-        description="Chat with your AI study assistant. Conversations are saved and searchable."
+        description="Chat with your AI tutor inside a specific lesson. Pick a lesson to ask questions grounded in its content."
       />
       <ChatExperience context={context} fullPage />
     </>

@@ -84,15 +84,21 @@ export const provisionWorkspace = async () =>
   unwrapData(await api.post(ep.provisionWorkspace));
 
 export const sendChatMessage = async (organizationId, message, options = {}) => {
-  const body = { organizationId, message };
-  ['sessionId', 'lessonId', 'quizId', 'flashcardId', 'topicId', 'materialId'].forEach((key) => {
-    if (options[key]) body[key] = options[key];
-  });
-  return unwrapData(await api.post(ep.chat, body));
+  const body = {
+    organizationId,
+    message,
+    lessonId: options.lessonId,
+  };
+  if (options.sessionId) body.sessionId = options.sessionId;
+  return unwrapData(
+    await api.post(ep.chat, body, { signal: options.signal }),
+  );
 };
 
-export const listChatSessions = async (organizationId) =>
-  unwrapList(unwrapData(await api.get(ep.chatSessions, orgParam(organizationId))));
+export const listChatSessions = async (organizationId, params = {}) =>
+  unwrapList(
+    unwrapData(await api.get(ep.chatSessions, orgParam(organizationId, params))),
+  );
 
 export const getChatSession = async (sessionId) =>
   unwrapData(await api.get(ep.chatSession(sessionId)));
@@ -166,6 +172,11 @@ export const regeneratePersonalLesson = async (organizationId, lessonId, payload
     ),
   );
 
+export const deletePersonalLesson = async (organizationId, lessonId) =>
+  unwrapData(
+    await api.delete(ep.selfStudyLessonDelete(lessonId), orgParam(organizationId)),
+  );
+
 export const generateLessonFlashcards = async (organizationId, lessonId, options) =>
   unwrapData(
     await api.post(ep.selfStudyFlashcards(lessonId), options, orgParam(organizationId)),
@@ -174,6 +185,61 @@ export const generateLessonFlashcards = async (organizationId, lessonId, options
 export const generateLessonQuiz = async (organizationId, lessonId, options) =>
   unwrapData(
     await api.post(ep.selfStudyQuiz(lessonId), options, orgParam(organizationId)),
+  );
+
+export const listLessonGroups = async (organizationId) =>
+  unwrapData(
+    await api.get(
+      ep.lessonGroups,
+      organizationId ? orgParam(organizationId) : undefined,
+    ),
+  );
+
+export const createLessonGroup = async (organizationId, payload) =>
+  unwrapData(
+    await api.post(
+      ep.lessonGroups,
+      {
+        ...(organizationId ? { organizationId } : {}),
+        ...payload,
+      },
+      organizationId ? orgParam(organizationId) : undefined,
+    ),
+  );
+
+export const updateLessonGroup = async (organizationId, groupId, payload) =>
+  unwrapData(
+    await api.patch(
+      ep.lessonGroup(groupId),
+      payload,
+      organizationId ? orgParam(organizationId) : undefined,
+    ),
+  );
+
+export const deleteLessonGroup = async (organizationId, groupId) =>
+  unwrapData(
+    await api.delete(
+      ep.lessonGroup(groupId),
+      organizationId ? orgParam(organizationId) : undefined,
+    ),
+  );
+
+export const assignLessonToGroup = async (organizationId, lessonId, payload) =>
+  unwrapData(
+    await api.patch(
+      ep.lessonGroupAssign(lessonId),
+      payload,
+      organizationId ? orgParam(organizationId) : undefined,
+    ),
+  );
+
+export const createNextLesson = async (organizationId, lessonId, payload = {}) =>
+  unwrapData(
+    await api.post(
+      ep.selfStudyNextLesson(lessonId),
+      payload,
+      orgParam(organizationId),
+    ),
   );
 
 export const getNotes = async (organizationId, filters = {}) =>

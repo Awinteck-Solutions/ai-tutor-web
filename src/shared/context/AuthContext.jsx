@@ -4,6 +4,7 @@ import api, { tokenStorage } from '../api/axios.instance';
 const AuthContext = createContext(null);
 
 const ADMIN_ROLES = ['SCHOOL_ADMIN', 'SUPER_ADMIN'];
+const PLATFORM_ROLES = ['SUPER_ADMIN'];
 const TEACHER_ROLES = ['TEACHER'];
 const STUDENT_ROLES = ['STUDENT'];
 
@@ -75,6 +76,7 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const getPortalPath = useCallback((role) => {
+    if (role === 'SUPER_ADMIN') return '/platform/dashboard';
     if (ADMIN_ROLES.includes(role)) return '/admin/dashboard';
     if (TEACHER_ROLES.includes(role)) return '/teacher/dashboard';
     if (STUDENT_ROLES.includes(role)) return '/student/dashboard';
@@ -90,6 +92,7 @@ export const AuthProvider = ({ children }) => {
       isPersonalWorkspace,
       isSchoolStudent,
       isAdmin: user ? ADMIN_ROLES.includes(user.role) : false,
+      isPlatformAdmin: user ? PLATFORM_ROLES.includes(user.role) : false,
       isTeacher: user ? TEACHER_ROLES.includes(user.role) : false,
       isStudent: user ? STUDENT_ROLES.includes(user.role) : false,
       login,

@@ -48,9 +48,11 @@ export const useClientList = (items = [], options = {}) => {
 
   const { setPage, ...pagination } = useClientPagination(filtered, pageSize);
 
+  const filterKey = useMemo(() => JSON.stringify(filterValues), [filterValues]);
+
   useEffect(() => {
     setPage(1);
-  }, [search, filterValues, pageSize, setPage]);
+  }, [search, filterKey, pageSize, setPage]);
 
   return {
     search,

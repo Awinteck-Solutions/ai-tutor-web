@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
-import { Select } from '@mantine/core';
+import { Select, SegmentedControl } from '@mantine/core';
 import { BookOpen, Play } from 'lucide-react';
 import { useAuth } from '../../../shared/context/AuthContext';
 import { PageHeader } from '../../../shared/components/PageShell';
@@ -13,8 +13,10 @@ import AdesiaDataTable from '../../../shared/components/AdesiaDataTable';
 import DataListFooter from '../../../shared/components/DataListFooter';
 import { useClientList } from '../../../shared/hooks/useClientList';
 import { getErrorMessage } from '../../../shared/utils/formatters';
-import { getLessons } from '../services/student.services';
+import { groupPersonalLessons } from '../../../shared/utils/lessonContent';
+import { getLessons, listLessonGroups } from '../services/student.services';
 import StudentSourceLabel from '../components/StudentSourceLabel';
+import GroupedLessonSections from '../components/GroupedLessonSections';
 
 const LESSONS_PAGE_SIZE = 9;
 
@@ -56,18 +58,35 @@ const lessonFilters = [
       return !lesson.isPersonal;
     },
   },
+  {
+    key: 'collection',
+    defaultValue: 'all',
+    apply: (lesson, value) => {
+      if (value === 'all') return true;
+      if (value === 'school') return !lesson.isPersonal;
+      if (value === 'ungrouped') return lesson.isPersonal && !lesson.groupId;
+      return lesson.groupId === value;
+    },
+  },
 ];
 
 const StudentLessonsPage = () => {
   const { organizationId, organizationName, isSchoolStudent } = useAuth();
   const [lessons, setLessons] = useState([]);
+  const [groups, setGroups] = useState([]);
   const [loading, setLoading] = useState(true);
   const [view, setView] = useState('grid');
 
   useEffect(() => {
     if (!organizationId) { setLoading(false); return; }
-    getLessons(organizationId)
-      .then((data) => setLessons(Array.isArray(data) ? data : []))
+    Promise.all([
+      getLessons(organizationId),
+      listLessonGroups(organizationId).catch(() => ({ groups: [] })),
+    ])
+      .then(([lessonData, groupData]) => {
+        setLessons(Array.isArray(lessonData) ? lessonData : []);
+        setGroups(groupData?.groups ?? []);
+      })
       .catch((err) => notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' }))
       .finally(() => setLoading(false));
   }, [organizationId]);
@@ -87,9 +106,24 @@ const StudentLessonsPage = () => {
     totalPages,
   } = useClientList(lessons, {
     pageSize: LESSONS_PAGE_SIZE,
-    searchKeys: ['title', 'summary'],
+    searchKeys: ['title', 'summary', 'groupTitle'],
     filters: lessonFilters,
   });
+
+  const grouped = useMemo(
+    () => groupPersonalLessons(filtered, groups),
+    [filtered, groups],
+  );
+
+  const collectionOptions = useMemo(() => {
+    const opts = [
+      { value: 'all', label: 'All collections' },
+      { value: 'school', label: isSchoolStudent && organizationName ? organizationName : 'School' },
+      { value: 'ungrouped', label: 'Ungrouped self-learn' },
+    ];
+    groups.forEach((g) => opts.push({ value: g.id, label: g.title }));
+    return opts;
+  }, [groups, isSchoolStudent, organizationName]);
 
   const emptyMessage = filtered.length
     ? 'No lessons on this page.'
@@ -110,6 +144,9 @@ const StudentLessonsPage = () => {
             organizationName={organizationName}
             isSchoolStudent={isSchoolStudent}
           />
+          {row.groupTitle && (
+            <span className="text-xs text-muted-foreground">{row.groupTitle}</span>
+          )}
         </div>
       ),
     },
@@ -145,6 +182,9 @@ const StudentLessonsPage = () => {
                 {l.isPersonal ? 'Self-learn' : organizationName}
               </AdesiaBadge>
             )}
+            {l.groupTitle && (
+              <AdesiaBadge status="draft">{l.groupTitle}</AdesiaBadge>
+            )}
             <AdesiaBadge status={progressStatus(l.progress)}>
               {progressLabel(l.progress)}
             </AdesiaBadge>
@@ -162,6 +202,25 @@ const StudentLessonsPage = () => {
     </Link>
   );
 
+  const listRow = (l) => (
+    <Link
+      key={l.id}
+      to={`/student/lessons/${l.id}`}
+      className="flex items-center justify-between gap-3 px-4 py-3 no-underline transition hover:bg-primary/5"
+    >
+      <div className="min-w-0">
+        <p className="truncate font-medium text-foreground">{l.title}</p>
+        <p className="text-xs text-muted-foreground">
+          {progressLabel(l.progress)}
+          {l.groupTitle ? ` · ${l.groupTitle}` : ''}
+        </p>
+      </div>
+      <Play className="h-4 w-4 shrink-0 text-primary" />
+    </Link>
+  );
+
+  const showCollections = view === 'collections';
+
   return (
     <>
       {loading ? <PageHeaderSkeleton /> : (
@@ -173,8 +232,8 @@ const StudentLessonsPage = () => {
       )}
 
       <ListGridToolbar
-        view={view}
-        onViewChange={setView}
+        view={view === 'table' ? 'list' : 'grid'}
+        onViewChange={(v) => setView(v === 'list' ? 'table' : 'grid')}
         search={search}
         onSearchChange={setSearch}
         searchPlaceholder="Search lessons…"
@@ -192,6 +251,14 @@ const StudentLessonsPage = () => {
           size="sm"
         />
         <Select
+          label="Collection"
+          data={collectionOptions}
+          value={filterValues.collection ?? 'all'}
+          onChange={(v) => setFilter('collection', v ?? 'all')}
+          className="w-48"
+          size="sm"
+        />
+        <Select
           label="Progress"
           data={[
             { value: 'all', label: 'All' },
@@ -206,21 +273,48 @@ const StudentLessonsPage = () => {
         />
       </ListGridToolbar>
 
-      {!loading && (
-        <p className="-mt-2 mb-4 text-sm text-muted-foreground">
-          {totalItems}
-          {' '}
-          lesson
-          {totalItems !== 1 ? 's' : ''}
-          {search.trim() || filterValues.progress !== 'all' || filterValues.source !== 'all'
-            ? ' matching filters'
-            : ''}
-        </p>
-      )}
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        {!loading && (
+          <p className="text-sm text-muted-foreground">
+            {totalItems}
+            {' lesson'}
+            {totalItems !== 1 ? 's' : ''}
+            {search.trim() || filterValues.progress !== 'all' || filterValues.source !== 'all'
+              || filterValues.collection !== 'all'
+              ? ' matching filters'
+              : ''}
+          </p>
+        )}
+        <SegmentedControl
+          size="xs"
+          value={view}
+          onChange={setView}
+          data={[
+            { value: 'grid', label: 'Grid' },
+            { value: 'table', label: 'Table' },
+            { value: 'collections', label: 'Collections' },
+          ]}
+        />
+      </div>
 
       {loading ? (
-        view === 'grid' ? <CardGridSkeleton count={6} /> : (
+        view === 'collections' ? <CardGridSkeleton count={3} /> : view === 'grid' ? (
+          <CardGridSkeleton count={6} />
+        ) : (
           <TableSkeleton rows={6} columns={3} title="Your lessons" />
+        )
+      ) : showCollections ? (
+        filtered.length === 0 ? (
+          <p className="py-12 text-center text-muted-foreground">{emptyMessage}</p>
+        ) : (
+          <GroupedLessonSections
+            school={grouped.school}
+            grouped={grouped.grouped}
+            ungrouped={grouped.ungrouped}
+            renderLesson={lessonCard}
+            renderListLesson={listRow}
+            emptyMessage={emptyMessage}
+          />
         )
       ) : view === 'grid' ? (
         <>

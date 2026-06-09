@@ -1,4 +1,5 @@
-import logo from '../assets/logo.svg'
+/** Canonical Adesia mark — keep in sync with public/adesia-icon.svg */
+import logo from '../assets/logo.svg';
 import addIconAsset from '../assets/admin/icons/add.svg'
 import cardIconAsset from '../assets/admin/icons/cardIcon.svg'
 import searchIconAsset from '../assets/admin/icons/searchIcon.svg'

@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Badge, Select, Tabs, TextInput } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { useDisclosure } from '@mantine/hooks';
@@ -11,19 +11,29 @@ import { PageHeaderSkeleton } from '../../../shared/components/TableSkeleton';
 import AdesiaDataTable from '../../../shared/components/AdesiaDataTable';
 import { AdesiaModal } from '../../../shared/components/AdesiaModal';
 import { GradientButton } from '../../../shared/components/GradientButton';
+import { useServerList } from '../../../shared/hooks/useServerList';
 import {
-  formatDateForApi, formatDateShort, getErrorMessage, parseApiDate,
+  emptyPaginated,
+  formatDateForApi,
+  formatDateShort,
+  getErrorMessage,
+  parseApiDate,
 } from '../../../shared/utils/formatters';
-import { createTerm, createYear, getYears, getYearTerms } from '../services/organization.services';
+import {
+  createTerm,
+  createYear,
+  getYears,
+  getYearsList,
+  getYearTerms,
+} from '../services/organization.services';
+
+const PAGE_SIZE = 8;
 
 const AcademicYearsPage = () => {
   const { organizationId } = useAuth();
-  const [years, setYears] = useState([]);
+  const [yearOptions, setYearOptions] = useState([]);
   const [selectedYearId, setSelectedYearId] = useState(null);
   const [selectedYearName, setSelectedYearName] = useState('');
-  const [terms, setTerms] = useState([]);
-  const [termsLoading, setTermsLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('years');
   const [yearOpen, { open: openYear, close: closeYear }] = useDisclosure(false);
@@ -31,31 +41,79 @@ const AcademicYearsPage = () => {
   const [yearForm, setYearForm] = useState({ name: '', startDate: null, endDate: null });
   const [termForm, setTermForm] = useState({ name: '', startDate: null, endDate: null });
 
-  const loadYears = () => {
+  const refreshYearOptions = useCallback(async () => {
     if (!organizationId) return;
-    setLoading(true);
-    getYears(organizationId, { limit: 100 })
-      .then((data) => setYears(data?.items ?? []))
-      .catch((err) => notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' }))
-      .finally(() => setLoading(false));
-  };
-
-  useEffect(() => { loadYears(); }, [organizationId]);
-
-  const loadTerms = async (yearId, yearName = '') => {
-    if (!organizationId || !yearId) return;
-    setSelectedYearId(yearId);
-    setSelectedYearName(yearName);
-    setTermsLoading(true);
     try {
-      const data = await getYearTerms(organizationId, yearId, { limit: 100 });
-      setTerms(data?.items ?? []);
+      const list = await getYearsList(organizationId);
+      setYearOptions(Array.isArray(list) ? list : []);
     } catch (err) {
       notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
-    } finally {
-      setTermsLoading(false);
     }
-  };
+  }, [organizationId]);
+
+  useEffect(() => {
+    refreshYearOptions();
+  }, [refreshYearOptions]);
+
+  const fetchYears = useCallback(async (params) => {
+    if (!organizationId) return emptyPaginated(params.limit);
+    try {
+      return await getYears(organizationId, {
+        page: params.page,
+        limit: params.limit,
+        search: params.search,
+      });
+    } catch (err) {
+      notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
+      return emptyPaginated(params.limit);
+    }
+  }, [organizationId]);
+
+  const fetchTerms = useCallback(async (params) => {
+    const yearId = params.academicYearId;
+    if (!organizationId || !yearId) return emptyPaginated(params.limit);
+    try {
+      return await getYearTerms(organizationId, yearId, {
+        page: params.page,
+        limit: params.limit,
+        search: params.search,
+      });
+    } catch (err) {
+      notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
+      return emptyPaginated(params.limit);
+    }
+  }, [organizationId]);
+
+  const {
+    items: years,
+    loading,
+    page: yearPage,
+    setPage: setYearPage,
+    search: yearSearch,
+    setSearch: setYearSearch,
+    meta: yearMeta,
+    reload: reloadYears,
+    rangeStart: yearRangeStart,
+    rangeEnd: yearRangeEnd,
+  } = useServerList(fetchYears, [organizationId], PAGE_SIZE);
+
+  const {
+    items: terms,
+    loading: termsLoading,
+    page: termPage,
+    setPage: setTermPage,
+    search: termSearch,
+    setSearch: setTermSearch,
+    meta: termMeta,
+    reload: reloadTerms,
+    setFilters: setTermFilters,
+    rangeStart: termRangeStart,
+    rangeEnd: termRangeEnd,
+  } = useServerList(fetchTerms, [organizationId, selectedYearId], PAGE_SIZE);
+
+  useEffect(() => {
+    setTermFilters({ academicYearId: selectedYearId || undefined });
+  }, [selectedYearId, setTermFilters]);
 
   const handleCreateYear = async () => {
     setSubmitting(true);
@@ -68,7 +126,8 @@ const AcademicYearsPage = () => {
       notifications.show({ title: 'Created', message: 'Academic year created', color: 'green' });
       closeYear();
       setYearForm({ name: '', startDate: null, endDate: null });
-      loadYears();
+      reloadYears();
+      refreshYearOptions();
     } catch (err) {
       notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
     } finally {
@@ -89,7 +148,7 @@ const AcademicYearsPage = () => {
       notifications.show({ title: 'Created', message: 'Term created', color: 'green' });
       closeTerm();
       setTermForm({ name: '', startDate: null, endDate: null });
-      loadTerms(selectedYearId, selectedYearName);
+      reloadTerms();
     } catch (err) {
       notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
     } finally {
@@ -99,9 +158,12 @@ const AcademicYearsPage = () => {
 
   const openTermsForYear = (year) => {
     const id = year.id || year._id;
-    loadTerms(id, year.name);
+    setSelectedYearId(id);
+    setSelectedYearName(year.name);
     setActiveTab('terms');
   };
+
+  const selectedYear = yearOptions.find((y) => (y.id || y._id) === selectedYearId);
 
   if (!organizationId) return <EmptyOrgHint />;
 
@@ -149,7 +211,7 @@ const AcademicYearsPage = () => {
 
   return (
     <>
-      {loading ? <PageHeaderSkeleton /> : (
+      {loading && !years.length ? <PageHeaderSkeleton /> : (
         <PageHeader
           title="Academic Calendar"
           gradientWord="Calendar"
@@ -180,9 +242,18 @@ const AcademicYearsPage = () => {
             data={years}
             columns={yearColumns}
             loading={loading}
-            pageSize={8}
+            pageSize={PAGE_SIZE}
+            serverPagination
+            page={yearPage}
+            totalPages={yearMeta.totalPages ?? 1}
+            totalItems={yearMeta.total ?? 0}
+            rangeStart={yearRangeStart}
+            rangeEnd={yearRangeEnd}
+            onPageChange={setYearPage}
+            paginate={false}
             searchable
-            searchKeys={['name']}
+            search={yearSearch}
+            onSearchChange={setYearSearch}
             searchPlaceholder="Search years…"
             emptyMessage="No academic years yet — create your first school year."
           />
@@ -194,11 +265,12 @@ const AcademicYearsPage = () => {
               label="Academic year"
               placeholder="Select a year"
               className="min-w-[240px] flex-1 max-w-md"
-              data={years.map((y) => ({ value: y.id || y._id, label: y.name }))}
+              data={yearOptions.map((y) => ({ value: y.id || y._id, label: y.name }))}
               value={selectedYearId}
               onChange={(v) => {
-                const year = years.find((y) => (y.id || y._id) === v);
-                loadTerms(v, year?.name ?? '');
+                const year = yearOptions.find((y) => (y.id || y._id) === v);
+                setSelectedYearId(v);
+                setSelectedYearName(year?.name ?? '');
               }}
             />
             {selectedYearId && (
@@ -214,9 +286,18 @@ const AcademicYearsPage = () => {
             data={selectedYearId ? terms : []}
             columns={termColumns}
             loading={termsLoading}
-            pageSize={8}
+            pageSize={PAGE_SIZE}
+            serverPagination
+            page={termPage}
+            totalPages={termMeta.totalPages ?? 1}
+            totalItems={termMeta.total ?? 0}
+            rangeStart={termRangeStart}
+            rangeEnd={termRangeEnd}
+            onPageChange={setTermPage}
+            paginate={false}
             searchable
-            searchKeys={['name']}
+            search={termSearch}
+            onSearchChange={setTermSearch}
             searchPlaceholder="Search terms…"
             emptyMessage={selectedYearId ? 'No terms for this year — add your first term.' : 'Select an academic year above.'}
             headerAction={selectedYearId ? (
@@ -282,15 +363,15 @@ const AcademicYearsPage = () => {
             label="Start date"
             value={termForm.startDate}
             onChange={(v) => setTermForm({ ...termForm, startDate: v })}
-            minDate={parseApiDate(years.find((y) => (y.id || y._id) === selectedYearId)?.startDate)}
-            maxDate={parseApiDate(years.find((y) => (y.id || y._id) === selectedYearId)?.endDate)}
+            minDate={parseApiDate(selectedYear?.startDate)}
+            maxDate={parseApiDate(selectedYear?.endDate)}
           />
           <DatePickerInput
             label="End date"
             value={termForm.endDate}
             onChange={(v) => setTermForm({ ...termForm, endDate: v })}
             minDate={termForm.startDate ?? undefined}
-            maxDate={parseApiDate(years.find((y) => (y.id || y._id) === selectedYearId)?.endDate)}
+            maxDate={parseApiDate(selectedYear?.endDate)}
           />
         </div>
       </AdesiaModal>

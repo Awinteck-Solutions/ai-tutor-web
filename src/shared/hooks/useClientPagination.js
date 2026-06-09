@@ -1,23 +1,23 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
 export const useClientPagination = (items = [], pageSize = 10) => {
   const list = Array.isArray(items) ? items : [];
   const [page, setPageState] = useState(1);
 
-  const setPage = (nextPage) => {
+  const setPage = useCallback((nextPage) => {
     const parsed = Number(nextPage);
     setPageState(Number.isFinite(parsed) && parsed > 0 ? parsed : 1);
-  };
+  }, []);
 
   const totalPages = Math.max(1, Math.ceil(list.length / pageSize));
 
   useEffect(() => {
     if (page > totalPages) setPage(totalPages);
-  }, [page, totalPages]);
+  }, [page, totalPages, setPage]);
 
   useEffect(() => {
     setPage(1);
-  }, [list.length, pageSize]);
+  }, [list.length, pageSize, setPage]);
 
   const paginatedItems = useMemo(() => {
     const start = (page - 1) * pageSize;
