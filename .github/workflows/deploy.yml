@@ -30,17 +30,17 @@ jobs:
         run: |
           docker build -t ai-tutor-web:${{ github.sha }} .
 
-      - name: Tag image
+      - name: Tag Docker image
         run: |
           docker tag ai-tutor-web:${{ github.sha }} \
           ${{ secrets.ECR_REGISTRY }}/awinteck-services:ai-tutor-web-${{ github.sha }}
 
-      - name: Push image to ECR
+      - name: Push Docker image to ECR
         run: |
           docker push \
           ${{ secrets.ECR_REGISTRY }}/awinteck-services:ai-tutor-web-${{ github.sha }}
 
-      - name: Deploy on EC2
+      - name: Deploy to EC2
         uses: appleboy/ssh-action@v1
         with:
           host: ${{ secrets.SERVER_IP }}
@@ -49,14 +49,24 @@ jobs:
           script: |
             set -e
 
-            IMAGE=$({{ secrets.ECR_REGISTRY }}/awinteck-services:ai-tutor-web-${{ github.sha }})
+            IMAGE="${{ secrets.ECR_REGISTRY }}/awinteck-services:ai-tutor-web-${{ github.sha }}"
 
-            echo "Deploying: $IMAGE"
+            echo "Deploying image: $IMAGE"
 
-            docker pull $IMAGE
+            # Login to ECR on EC2
+            aws ecr get-login-password --region ${{ secrets.AWS_REGION }} \
+            | docker login --username AWS --password-stdin ${{ secrets.ECR_REGISTRY }}
+
+            # Pull latest image
+            docker pull "$IMAGE"
+
+            # Stop & remove old container safely
             docker stop ai-tutor-web || true
             docker rm ai-tutor-web || true
-            docker run -d -p 7071:7071 \
-              --restart always \
-              --name ai-tutor-web \ 
-              $IMAGE
+
+            # Run new container
+            docker run -d \
+              --name ai-tutor-web \
+              --restart unless-stopped \
+              -p 7071:7071 \
+              "$IMAGE"
