@@ -1,0 +1,699 @@
+import { useCallback, useMemo, useRef, useState, useEffect } from 'react';
+import { Collapse, Modal, Progress, SegmentedControl, Select, Tabs } from '@mantine/core';
+import { notifications } from '@mantine/notifications';
+import {
+  BookOpen,
+  CheckCircle,
+  CheckCircle2,
+  ChevronDown,
+  Circle,
+  ClipboardList,
+  Clock,
+  Eye,
+  GraduationCap,
+  Layers,
+  Play,
+  RotateCcw,
+  Sparkles,
+  Target,
+} from 'lucide-react';
+import { Link, useSearchParams } from 'react-router-dom';
+import { useAuth } from '../../../shared/context/AuthContext';
+import { PageHeader } from '../../../shared/components/PageShell';
+import ListGridToolbar from '../../../shared/components/ListGridToolbar';
+import DataListFooter from '../../../shared/components/DataListFooter';
+import { useClientList } from '../../../shared/hooks/useClientList';
+import { PageHeaderSkeleton } from '../../../shared/components/TableSkeleton';
+import { GlassCard } from '../../../shared/components/GlassCard';
+import { AdesiaBadge } from '../../../shared/components/AdesiaBadge';
+import { EmptyOrgHint } from '../../../shared/components/PageLoader';
+import { StudentPracticeSkeleton } from '../components/StudentPageSkeleton';
+import { formatDateTime, getErrorMessage } from '../../../shared/utils/formatters';
+import FlashcardStudy from '../components/FlashcardStudy';
+import QuizStudy from '../components/QuizStudy';
+import QuizCloseModal from '../components/QuizCloseModal';
+import { getPractice, saveQuizDraft } from '../services/student.services';
+import StudentSourceLabel from '../components/StudentSourceLabel';
+
+const PRACTICE_PAGE_SIZE = 9;
+const FLASHCARD_PAGE_SIZE = 6;
+
+const quizStatusFilter = {
+  key: 'status',
+  defaultValue: 'all',
+  apply: (item, value) => {
+    if (value === 'all') return true;
+    if (value === 'pending') {
+      return item.status === 'pending' || item.status === 'in_progress';
+    }
+    return item.status === value;
+  },
+};
+
+const sourceFilterDef = {
+  key: 'source',
+  defaultValue: 'all',
+  apply: (item, value) => {
+    if (value === 'all') return true;
+    if (value === 'self') return Boolean(item.isPersonal);
+    return !item.isPersonal;
+  },
+};
+
+const flashcardStatusFilter = {
+  key: 'status',
+  defaultValue: 'all',
+  apply: (group, value) => {
+    if (value === 'all') return true;
+    if (value === 'pending') return group.reviewed < group.total;
+    return group.reviewed >= group.total && group.total > 0;
+  },
+};
+
+const matchPracticeSearch = (item, query, keys) =>
+  keys.some((key) => String(item[key] ?? '').toLowerCase().includes(query));
+
+const quizCompletionPercent = (q) => {
+  if (q.status === 'completed') return 100;
+  return q.progressPercent ?? 0;
+};
+
+const quizProgressLabel = (q) => {
+  const pct = quizCompletionPercent(q);
+  return `${pct}% complete`;
+};
+
+const PracticeIconBox = ({ icon: Icon, tone = 'primary' }) => {
+  const tones = {
+    primary: 'bg-primary/15 text-primary',
+    amber: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
+    emerald: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400',
+    blue: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
+  };
+  return (
+    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tones[tone] ?? tones.primary}`}>
+      <Icon className="h-5 w-5" />
+    </div>
+  );
+};
+
+const quizIcon = (status) => {
+  if (status === 'completed') return { Icon: CheckCircle, tone: 'emerald' };
+  if (status === 'in_progress') return { Icon: Clock, tone: 'amber' };
+  return { Icon: ClipboardList, tone: 'blue' };
+};
+
+const StudentPracticePage = () => {
+  const { organizationId, organizationName, isSchoolStudent } = useAuth();
+  const [searchParams] = useSearchParams();
+  const lessonFilter = searchParams.get('lessonId');
+  const [data, setData] = useState({ quizzes: [], flashcards: [], flashcardGroups: [], summary: {} });
+  const [loading, setLoading] = useState(true);
+  const [tab, setTab] = useState('quizzes');
+  const [answersQuiz, setAnswersQuiz] = useState(null);
+  const [activeQuiz, setActiveQuiz] = useState(null);
+  const [quizRetake, setQuizRetake] = useState(false);
+  const [activeFlashcards, setActiveFlashcards] = useState(null);
+  const [expandedLessons, setExpandedLessons] = useState({});
+  const [quizExitOpen, setQuizExitOpen] = useState(false);
+  const [quizExitSaving, setQuizExitSaving] = useState(false);
+  const quizSaveRef = useRef(null);
+
+  const load = useCallback(() => {
+    if (!organizationId) return;
+    setLoading(true);
+    getPractice(organizationId)
+      .then((practiceData) => {
+        setData(practiceData);
+        const groups = practiceData?.flashcardGroups ?? [];
+        setExpandedLessons(
+          Object.fromEntries(groups.map((g) => [g.lessonId, false])),
+        );
+      })
+      .catch((err) => notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' }))
+      .finally(() => setLoading(false));
+  }, [organizationId]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const lessonScopedQuizzes = useMemo(() => {
+    const list = data.quizzes ?? [];
+    if (!lessonFilter) return list;
+    return list.filter((q) => q.lessonId === lessonFilter);
+  }, [data.quizzes, lessonFilter]);
+
+  const flashcardGroups = useMemo(() => {
+    const groups = data.flashcardGroups ?? [];
+    if (!lessonFilter) return groups;
+    return groups.filter((g) => g.lessonId === lessonFilter);
+  }, [data.flashcardGroups, lessonFilter]);
+
+  const quizList = useClientList(lessonScopedQuizzes, {
+    pageSize: PRACTICE_PAGE_SIZE,
+    searchKeys: ['title', 'lessonTitle', 'subjectName'],
+    matchSearch: matchPracticeSearch,
+    filters: [quizStatusFilter, sourceFilterDef],
+  });
+
+  const flashcardList = useClientList(flashcardGroups, {
+    pageSize: FLASHCARD_PAGE_SIZE,
+    searchKeys: ['lessonTitle', 'subjectName'],
+    matchSearch: matchPracticeSearch,
+    filters: [flashcardStatusFilter, sourceFilterDef],
+  });
+
+  const activeList = tab === 'quizzes' ? quizList : flashcardList;
+
+  const handleTabChange = (value) => {
+    const from = value === 'quizzes' ? flashcardList : quizList;
+    const to = value === 'quizzes' ? quizList : flashcardList;
+    const source = from.filterValues.source ?? 'all';
+    if (to.filterValues.source !== source) {
+      to.setFilter('source', source);
+    }
+    setTab(value);
+  };
+
+  const activeCountLabel = tab === 'quizzes'
+    ? `${activeList.totalItems} quiz${activeList.totalItems === 1 ? '' : 'zes'}`
+    : `${activeList.totalItems} lesson${activeList.totalItems === 1 ? '' : 's'}`;
+
+  const closeQuiz = () => {
+    setActiveQuiz(null);
+    setQuizRetake(false);
+    setQuizExitOpen(false);
+    quizSaveRef.current = null;
+  };
+
+  const isLessonExpanded = (lessonId) => expandedLessons[lessonId] === true;
+
+  const toggleLessonExpanded = (lessonId) => {
+    setExpandedLessons((prev) => ({
+      ...prev,
+      [lessonId]: !prev[lessonId],
+    }));
+  };
+
+  const handleQuizExitSave = async () => {
+    if (quizSaveRef.current) {
+      setQuizExitSaving(true);
+      try {
+        await quizSaveRef.current();
+        notifications.show({ title: 'Saved', message: 'Quiz progress saved', color: 'green' });
+        closeQuiz();
+        load();
+      } catch (err) {
+        notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
+      } finally {
+        setQuizExitSaving(false);
+      }
+      return;
+    }
+    if (activeQuiz?.quizId && activeQuiz?.draft) {
+      setQuizExitSaving(true);
+      try {
+        await saveQuizDraft(activeQuiz.quizId, {
+          answers: activeQuiz.draft.answers,
+          currentStep: activeQuiz.draft.currentStep,
+        });
+        closeQuiz();
+        load();
+      } finally {
+        setQuizExitSaving(false);
+      }
+      return;
+    }
+    closeQuiz();
+  };
+
+  if (!organizationId) return <EmptyOrgHint />;
+  if (loading) return <StudentPracticeSkeleton />;
+
+  const summary = data.summary ?? {};
+
+  return (
+    <>
+      <PageHeader
+        title="Practice"
+        gradientWord="Practice"
+        description={
+          lessonFilter
+            ? 'Quizzes and flashcards for this lesson — study in practice mode.'
+            : 'All your quizzes and flashcards — pending and completed, with answer review.'
+        }
+      />
+
+      {lessonFilter && (
+        <p className="mb-4 text-sm text-muted-foreground">
+          Filtered to one lesson.{' '}
+          <Link to="/student/practice" className="text-primary hover:underline">Show all</Link>
+        </p>
+      )}
+
+      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <GlassCard className="flex items-center gap-3 p-4">
+          <PracticeIconBox icon={Target} tone="amber" />
+          <div>
+            <p className="text-xs text-muted-foreground">Quizzes pending</p>
+            <p className="font-display text-xl font-bold text-foreground">{summary.quizzesPending ?? 0}</p>
+          </div>
+        </GlassCard>
+        <GlassCard className="flex items-center gap-3 p-4">
+          <PracticeIconBox icon={CheckCircle} tone="emerald" />
+          <div>
+            <p className="text-xs text-muted-foreground">Quizzes done</p>
+            <p className="font-display text-xl font-bold text-foreground">{summary.quizzesCompleted ?? 0}</p>
+          </div>
+        </GlassCard>
+        <GlassCard className="flex items-center gap-3 p-4">
+          <PracticeIconBox icon={Layers} tone="blue" />
+          <div>
+            <p className="text-xs text-muted-foreground">Cards pending</p>
+            <p className="font-display text-xl font-bold text-foreground">{summary.flashcardsPending ?? 0}</p>
+          </div>
+        </GlassCard>
+        <GlassCard className="flex items-center gap-3 p-4">
+          <PracticeIconBox icon={Sparkles} tone="primary" />
+          <div>
+            <p className="text-xs text-muted-foreground">Cards reviewed</p>
+            <p className="font-display text-xl font-bold text-foreground">{summary.flashcardsCompleted ?? 0}</p>
+          </div>
+        </GlassCard>
+      </div>
+
+      <ListGridToolbar
+        search={activeList.search}
+        onSearchChange={activeList.setSearch}
+        searchPlaceholder={tab === 'quizzes' ? 'Search quizzes…' : 'Search flashcard lessons…'}
+        showSearch
+      >
+        <Select
+          label="Source"
+          data={[
+            { value: 'all', label: 'All sources' },
+            { value: 'school', label: isSchoolStudent && organizationName ? organizationName : 'School' },
+            { value: 'self', label: 'Self-learn' },
+          ]}
+          value={activeList.filterValues.source ?? 'all'}
+          onChange={(v) => {
+            quizList.setFilter('source', v ?? 'all');
+            flashcardList.setFilter('source', v ?? 'all');
+          }}
+          className="w-40"
+          size="sm"
+        />
+      </ListGridToolbar>
+
+      <p className="-mt-2 mb-4 text-sm text-muted-foreground">
+        {activeCountLabel}
+        {activeList.search.trim() || activeList.filterValues.status !== 'all' || activeList.filterValues.source !== 'all'
+          ? ' matching filters'
+          : ''}
+      </p>
+
+      <Tabs value={tab} onChange={handleTabChange}>
+        <Tabs.List className="mb-4 flex-wrap gap-1 rounded-xl border border-border/50 bg-card/50 p-1">
+          <Tabs.Tab value="quizzes" leftSection={<BookOpen className="h-4 w-4" />}>
+            Quizzes ({quizList.filtered.length})
+          </Tabs.Tab>
+          <Tabs.Tab value="flashcards" leftSection={<Layers className="h-4 w-4" />}>
+            Flashcards ({flashcardList.filtered.length})
+          </Tabs.Tab>
+        </Tabs.List>
+
+        <Tabs.Panel value="quizzes">
+          <SegmentedControl
+            className="mb-4"
+            value={quizList.filterValues.status ?? 'all'}
+            onChange={(v) => quizList.setFilter('status', v ?? 'all')}
+            data={[
+              { label: 'All', value: 'all' },
+              { label: 'Pending', value: 'pending' },
+              { label: 'Completed', value: 'completed' },
+            ]}
+          />
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            {quizList.paginatedItems.length ? quizList.paginatedItems.map((q) => {
+              const { Icon: QuizIcon, tone } = quizIcon(q.status);
+              return (
+              <GlassCard key={q.quizId} className="flex flex-col p-5">
+                <div className="mb-3 flex items-start justify-between gap-2">
+                  <PracticeIconBox icon={QuizIcon} tone={tone} />
+                  <AdesiaBadge status={q.status === 'completed' ? 'active' : 'draft'}>
+                    {q.status === 'completed' ? 'Completed' : q.status === 'in_progress' ? 'In progress' : 'Pending'}
+                  </AdesiaBadge>
+                </div>
+                <h3 className="font-display text-sm font-semibold text-foreground">{q.title || 'Quiz'}</h3>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {q.lessonTitle}
+                  {(q.isPersonal || (isSchoolStudent && organizationName && !q.isPersonal)) && (
+                    <>
+                      {' · '}
+                      <StudentSourceLabel
+                        isPersonal={q.isPersonal}
+                        organizationName={organizationName}
+                        isSchoolStudent={isSchoolStudent}
+                        className="inline"
+                      />
+                    </>
+                  )}
+                </p>
+                <div className="mt-3">
+                  <div className="mb-1 flex justify-between text-xs text-muted-foreground">
+                    <span>Progress</span>
+                    <span>{quizProgressLabel(q)}</span>
+                  </div>
+                  <Progress
+                    value={quizCompletionPercent(q)}
+                    size="sm"
+                    radius="xl"
+                  />
+                </div>
+                {q.status === 'completed' && (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Score: {Math.round(q.score ?? 0)}% · {formatDateTime(q.completedAt)}
+                  </p>
+                )}
+                <div className="mt-4 flex flex-wrap gap-2">
+                  {q.status !== 'completed' ? (
+                    <button
+                      type="button"
+                      className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs"
+                      onClick={() => {
+                        setQuizRetake(false);
+                        setActiveQuiz(q);
+                      }}
+                    >
+                      <Play className="h-3 w-3" />
+                      {q.status === 'in_progress' ? 'Continue quiz' : 'Take quiz'}
+                    </button>
+                  ) : (
+                    <>
+                      <button
+                        type="button"
+                        className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs"
+                        onClick={() => {
+                          setQuizRetake(true);
+                          setActiveQuiz(q);
+                        }}
+                      >
+                        <RotateCcw className="h-3 w-3" />
+                        Retake
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs"
+                        onClick={() => setAnswersQuiz(q)}
+                      >
+                        <Eye className="h-3 w-3" />
+                        View answers
+                      </button>
+                    </>
+                  )}
+                  <Link
+                    to={`/student/lessons/${q.lessonId}`}
+                    className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs no-underline"
+                  >
+                    <BookOpen className="h-3 w-3" />
+                    Lesson
+                  </Link>
+                </div>
+              </GlassCard>
+            );
+            }) : (
+              <p className="col-span-full py-12 text-center text-muted-foreground">
+                {quizList.filtered.length ? 'No quizzes on this page.' : 'No quizzes match your filters.'}
+              </p>
+            )}
+          </div>
+          <DataListFooter
+            rangeStart={quizList.rangeStart}
+            rangeEnd={quizList.rangeEnd}
+            totalItems={quizList.totalItems}
+            page={quizList.page}
+            totalPages={quizList.totalPages}
+            pageSize={PRACTICE_PAGE_SIZE}
+            onPageChange={quizList.setPage}
+          />
+        </Tabs.Panel>
+
+        <Tabs.Panel value="flashcards">
+          <div className="mb-4">
+            <SegmentedControl
+              value={flashcardList.filterValues.status ?? 'all'}
+              onChange={(v) => flashcardList.setFilter('status', v ?? 'all')}
+              data={[
+                { label: 'All', value: 'all' },
+                { label: 'In progress', value: 'pending' },
+                { label: 'Complete', value: 'completed' },
+              ]}
+            />
+          </div>
+
+          <div className="space-y-6">
+            {flashcardList.paginatedItems.length ? flashcardList.paginatedItems.map((group) => {
+              const isOpen = isLessonExpanded(group.lessonId);
+              return (
+              <GlassCard key={group.lessonId} className="overflow-hidden p-0">
+                <button
+                  type="button"
+                  className="flex w-full items-start justify-between gap-3 p-5 text-left transition hover:bg-muted/20"
+                  onClick={(e) => {
+                    e.preventDefault();
+                    toggleLessonExpanded(group.lessonId);
+                  }}
+                  aria-expanded={isOpen}
+                >
+                  <PracticeIconBox icon={BookOpen} />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <ChevronDown
+                        className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                      />
+                      <h3 className="font-display text-sm font-semibold text-foreground">{group.lessonTitle}</h3>
+                    </div>
+                    <p className="mt-1 flex flex-wrap items-center gap-1 pl-6 text-xs text-muted-foreground">
+                      <GraduationCap className="h-3 w-3 shrink-0" />
+                      {group.subjectName}
+                      <span>·</span>
+                      <StudentSourceLabel
+                        isPersonal={group.isPersonal}
+                        organizationName={organizationName}
+                        isSchoolStudent={isSchoolStudent}
+                      />
+                    </p>
+                    <div className="mt-3 pl-6">
+                      <div className="mb-1 flex justify-between text-xs text-muted-foreground">
+                        <span>Lesson progress</span>
+                        <span>{group.progressPercent}%</span>
+                      </div>
+                      <Progress value={group.progressPercent} size="sm" radius="xl" />
+                    </div>
+                  </div>
+                  <AdesiaBadge status={group.progressPercent >= 100 ? 'active' : 'draft'}>
+                    {group.reviewed}/{group.total}
+                  </AdesiaBadge>
+                </button>
+
+                <Collapse in={isOpen}>
+                  <div className="border-t border-border/40 px-5 pb-5 pt-2">
+                    <div className="mb-4 flex flex-wrap gap-2">
+                      <button
+                        type="button"
+                        className="btn-outline flex items-center gap-1 !px-3 !py-1.5 text-xs"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveFlashcards(group.flashcards ?? []);
+                        }}
+                      >
+                        <Sparkles className="h-3 w-3" />
+                        Review deck ({group.total})
+                      </button>
+                      <Link
+                        to={`/student/lessons/${group.lessonId}`}
+                        className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs no-underline"
+                      >
+                        <BookOpen className="h-3 w-3" />
+                        Open lesson
+                      </Link>
+                    </div>
+                    <ul className="space-y-2">
+                      {(group.flashcards ?? []).map((f) => (
+                        <li
+                          key={f.flashcardId}
+                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/20 px-3 py-2"
+                        >
+                          <div className="flex min-w-0 items-center gap-2">
+                            {f.status === 'completed' ? (
+                              <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                            ) : (
+                              <Circle className="h-4 w-4 shrink-0 text-muted-foreground" />
+                            )}
+                            <p className="truncate text-sm text-foreground">{f.question}</p>
+                          </div>
+                          <div className="flex shrink-0 gap-2">
+                            <button
+                              type="button"
+                              className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setActiveFlashcards([f]);
+                              }}
+                            >
+                              <Sparkles className="h-3 w-3" />
+                              Review
+                            </button>
+                            <button
+                              type="button"
+                              className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setAnswersQuiz({
+                                  title: 'Flashcard',
+                                  lessonTitle: f.lessonTitle,
+                                  answers: [{
+                                    question: f.question,
+                                    userAnswer: f.status === 'completed' ? f.lastResult : '—',
+                                    correctAnswer: f.answer,
+                                    isCorrect: f.lastResult === 'CORRECT',
+                                  }],
+                                });
+                              }}
+                            >
+                              <Eye className="h-3 w-3" />
+                              View Q&A
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </Collapse>
+              </GlassCard>
+            );
+            }) : (
+              <p className="py-12 text-center text-muted-foreground">
+                {flashcardList.filtered.length ? 'No groups on this page.' : 'No flashcard groups match your filters.'}
+              </p>
+            )}
+          </div>
+          <DataListFooter
+            rangeStart={flashcardList.rangeStart}
+            rangeEnd={flashcardList.rangeEnd}
+            totalItems={flashcardList.totalItems}
+            page={flashcardList.page}
+            totalPages={flashcardList.totalPages}
+            pageSize={FLASHCARD_PAGE_SIZE}
+            onPageChange={flashcardList.setPage}
+          />
+        </Tabs.Panel>
+      </Tabs>
+
+      <Modal
+        opened={Boolean(answersQuiz)}
+        onClose={() => setAnswersQuiz(null)}
+        title={answersQuiz?.title || 'Review'}
+        size="lg"
+        centered
+        classNames={{ content: 'glass-card !bg-card' }}
+      >
+        {answersQuiz && (
+          <div className="space-y-4">
+            {answersQuiz.lessonTitle && (
+              <p className="text-sm text-muted-foreground">{answersQuiz.lessonTitle}</p>
+            )}
+            {(answersQuiz.answers ?? []).map((a, i) => (
+              <div
+                key={a.questionId || i}
+                className={`rounded-xl border p-4 ${
+                  a.isCorrect
+                    ? 'border-emerald-500/30 bg-emerald-500/5'
+                    : 'border-red-500/30 bg-red-500/5'
+                }`}
+              >
+                <p className="text-sm font-medium text-foreground">{a.question}</p>
+                <p className="mt-2 text-sm">
+                  <span className="text-muted-foreground">Your answer: </span>
+                  {a.userAnswer || '—'}
+                </p>
+                {!a.isCorrect && (
+                  <p className="mt-1 text-sm text-primary">
+                    Correct: {a.correctAnswer}
+                  </p>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        opened={Boolean(activeQuiz)}
+        onClose={() => (quizRetake ? closeQuiz() : setQuizExitOpen(true))}
+        title={activeQuiz?.title || 'Quiz'}
+        size="lg"
+        centered
+        closeOnClickOutside={false}
+        classNames={{ content: 'glass-card !bg-card' }}
+      >
+        {activeQuiz && (
+          <QuizStudy
+            quiz={{
+              quizId: activeQuiz.quizId,
+              lessonId: activeQuiz.lessonId,
+              lessonTitle: activeQuiz.lessonTitle,
+              title: activeQuiz.title,
+              questions: activeQuiz.questions ?? [],
+            }}
+            draft={quizRetake ? null : activeQuiz.draft}
+            retakeMode={quizRetake}
+            onRegisterSave={(fn) => { quizSaveRef.current = fn; }}
+            onCloseWithUnsaved={() => setQuizExitOpen(true)}
+            onCloseRequest={closeQuiz}
+            onComplete={(result) => {
+              const wasRetake = result?.practice || quizRetake;
+              closeQuiz();
+              if (!wasRetake) load();
+            }}
+            onSaved={load}
+          />
+        )}
+      </Modal>
+
+      <QuizCloseModal
+        opened={quizExitOpen}
+        onClose={() => setQuizExitOpen(false)}
+        saving={quizExitSaving}
+        onSaveAndExit={handleQuizExitSave}
+        onLeaveWithoutSaving={closeQuiz}
+      />
+
+      <Modal
+        opened={Boolean(activeFlashcards?.length)}
+        onClose={() => setActiveFlashcards(null)}
+        title="Flashcard review"
+        size="lg"
+        centered
+        classNames={{ content: 'glass-card !bg-card' }}
+      >
+        {activeFlashcards?.length > 0 && (
+          <FlashcardStudy
+            cards={activeFlashcards.map((f) => ({
+              flashcardId: f.flashcardId,
+              question: f.question,
+              answer: f.answer,
+              lessonId: f.lessonId,
+            }))}
+            onComplete={() => {
+              setActiveFlashcards(null);
+              load();
+            }}
+          />
+        )}
+      </Modal>
+
+    </>
+  );
+};
+
+export default StudentPracticePage;

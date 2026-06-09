@@ -1,0 +1,91 @@
+@import "@mantine/core/styles.css";
+@import '@mantine/tiptap/styles.css';
+@import '@mantine/notifications/styles.css';
+
+/* Flashcard flip */
+.flashcard-scene {
+  perspective: 1200px;
+  display: block;
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  width: 100%;
+}
+
+.flashcard-card {
+  position: relative;
+  width: 100%;
+  min-height: 220px;
+  transition: transform 0.55s cubic-bezier(0.4, 0.2, 0.2, 1);
+  transform-style: preserve-3d;
+}
+
+.flashcard-card.flipped {
+  transform: rotateY(180deg);
+}
+
+.flashcard-face {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.flashcard-face.back {
+  transform: rotateY(180deg);
+}
+
+.flashcard-face.front {
+  position: relative;
+}
+
+/* Quiz question transition */
+@keyframes quizSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes quizPopIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.quiz-question-enter {
+  animation: quizSlideIn 0.35s ease-out;
+}
+
+.quiz-result-enter {
+  animation: quizPopIn 0.45s ease-out;
+}
+
+.quiz-progress-bar .mantine-Progress-section {
+  transition: width 0.4s ease;
+}
+
+.notes-rich-text .tiptap {
+  min-height: 200px;
+  padding: 0.75rem 1rem;
+  outline: none;
+}
+
+.notes-rich-text .tiptap p.is-editor-empty:first-child::before {
+  color: var(--mantine-color-dimmed);
+  content: attr(data-placeholder);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}

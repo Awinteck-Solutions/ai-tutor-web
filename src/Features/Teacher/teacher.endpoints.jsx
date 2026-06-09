@@ -1,0 +1,33 @@
+import { BASEURL } from '../../constants/api.constant';
+
+export const teacherEndpoints = {
+  dashboard: `${BASEURL}/teacher/dashboard`,
+  subjects: `${BASEURL}/teacher/subjects`,
+  topics: `${BASEURL}/teacher/topics`,
+  /** Paginated lists — same as admin; scoped by teacher enrollment on API */
+  materials: `${BASEURL}/materials`,
+  lessons: `${BASEURL}/lessons`,
+  students: `${BASEURL}/teacher/students`,
+  student: (id) => `${BASEURL}/teacher/students/${id}`,
+  analytics: `${BASEURL}/analytics/teacher`,
+  search: `${BASEURL}/search`,
+  notifications: `${BASEURL}/notifications`,
+  notificationRead: (id) => `${BASEURL}/notifications/${id}/read`,
+  notificationsReadAll: `${BASEURL}/notifications/read-all`,
+  uploadPdf: `${BASEURL}/materials/upload/pdf`,
+  uploadText: `${BASEURL}/materials/upload/text`,
+  uploadYoutube: `${BASEURL}/materials/youtube`,
+  material: (id) => `${BASEURL}/materials/${id}`,
+  materialChunks: (id) => `${BASEURL}/materials/${id}/chunks`,
+  materialReprocess: (id) => `${BASEURL}/materials/${id}/reprocess`,
+  materialLogs: (id) => `${BASEURL}/materials/${id}/processing-logs`,
+  lesson: (id) => `${BASEURL}/lessons/${id}`,
+  lessonGenerate: `${BASEURL}/lessons/generate`,
+  lessonRegenerate: (id) => `${BASEURL}/lessons/${id}/regenerate`,
+  lessonSources: (id) => `${BASEURL}/lessons/${id}/sources`,
+  lessonFlashcardsGenerate: (lessonId) => `${BASEURL}/lessons/${lessonId}/flashcards/generate`,
+  lessonFlashcards: (lessonId) => `${BASEURL}/lessons/${lessonId}/flashcards`,
+  lessonQuizGenerate: (lessonId) => `${BASEURL}/lessons/${lessonId}/quiz/generate`,
+  lessonQuiz: (lessonId) => `${BASEURL}/lessons/${lessonId}/quiz`,
+  job: (jobId) => `${BASEURL}/jobs/${jobId}`,
+};
