@@ -8,6 +8,7 @@ import TeacherLessonsPage from '../pages/lessons.pages';
 import LessonPreviewPage from '../../../shared/pages/LessonPreviewPage';
 import StudentsPage from '../pages/students.pages';
 import StudentDetailPage from '../pages/studentDetail.pages';
+import AnalyseStudentPage from '../../../shared/pages/AnalyseStudentPage';
 import TeacherSettingsPage from '../pages/settings.pages';
 import TeacherNotificationsPage from '../pages/notifications.pages';
 
@@ -24,6 +25,7 @@ export const teacherRoutes = (
     <Route path="lessons/:lessonId/preview" element={<LessonPreviewPage />} />
     <Route path="students" element={<StudentsPage />} />
     <Route path="students/:id" element={<StudentDetailPage />} />
+    <Route path="students/:id/analyse" element={<AnalyseStudentPage basePath="/teacher" />} />
     <Route path="notifications" element={<TeacherNotificationsPage />} />
     <Route path="settings" element={<TeacherSettingsPage />} />
   </>

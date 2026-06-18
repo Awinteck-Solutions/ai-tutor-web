@@ -77,8 +77,9 @@ const platformNavItem = {
   items: [{ label: 'Platform admin', path: '/platform/dashboard', icon: Shield }],
 };
 
-const OrgBanner = ({ organizationId }) =>
-  !organizationId ? (
+const OrgBanner = ({ organizationId, isPlatformAdmin }) => {
+  if (organizationId || isPlatformAdmin) return null;
+  return (
     <div className="alert-warning">
       No organization linked to your account.{' '}
       <a href="/onboarding" className="font-semibold text-primary underline underline-offset-2">
@@ -86,7 +87,8 @@ const OrgBanner = ({ organizationId }) =>
       </a>{' '}
       or contact your administrator.
     </div>
-  ) : null;
+  );
+};
 
 const AdminLayout = () => {
   const { organizationId, isPlatformAdmin } = useAuth();
@@ -97,9 +99,9 @@ const AdminLayout = () => {
   return (
     <AppShell
       navGroups={navGroups}
-      homePath="/admin/dashboard"
-      portalLabel="Admin"
-      banner={<OrgBanner organizationId={organizationId} />}
+      homePath={isPlatformAdmin ? '/platform/dashboard' : '/admin/dashboard'}
+      portalLabel={isPlatformAdmin ? 'Platform' : 'Admin'}
+      banner={<OrgBanner organizationId={organizationId} isPlatformAdmin={isPlatformAdmin} />}
     />
   );
 };

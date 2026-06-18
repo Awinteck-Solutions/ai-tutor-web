@@ -12,6 +12,7 @@ import StudentSubscriptionPage from '../pages/subscription.pages';
 import StudentSelfLearnPage from '../pages/selfLearn.pages';
 import StudentMilestonesPage from '../pages/milestones.pages';
 import StudentChatPage from '../pages/chat.pages';
+import StudentSelfAnalysePage from '../pages/analyse.pages';
 
 export const studentRoutes = (
   <>
@@ -28,6 +29,7 @@ export const studentRoutes = (
     <Route path="achievements" element={<StudentAchievementsPage />} />
     <Route path="notifications" element={<StudentNotificationsPage />} />
     <Route path="subscription" element={<StudentSubscriptionPage />} />
+    <Route path="analyse" element={<StudentSelfAnalysePage />} />
     <Route path="settings" element={<StudentSettingsPage />} />
   </>
 );

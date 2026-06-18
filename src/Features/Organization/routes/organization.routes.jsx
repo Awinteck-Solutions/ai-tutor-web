@@ -14,6 +14,7 @@ import LessonPreviewPage from '../../../shared/pages/LessonPreviewPage';
 import AnalyticsPage from '../pages/analytics.pages';
 import AdminStudentsPage from '../pages/students.pages';
 import AdminStudentDetailPage from '../pages/studentDetail.pages';
+import AnalyseStudentPage from '../../../shared/pages/AnalyseStudentPage';
 import AuditPage from '../pages/audit.pages';
 import JobsPage from '../pages/jobs.pages';
 import NotificationsPage from '../pages/notifications.pages';
@@ -29,6 +30,7 @@ export const organizationRoutes = (
     <Route path="members" element={<MembersPage />} />
     <Route path="students" element={<AdminStudentsPage />} />
     <Route path="students/:id" element={<AdminStudentDetailPage />} />
+    <Route path="students/:id/analyse" element={<AnalyseStudentPage basePath="/admin" backLabel="Back to student" />} />
     <Route path="academic/years" element={<AcademicYearsPage />} />
     <Route path="academic/subjects" element={<AcademicSubjectsPage />} />
     <Route path="academic/topics" element={<Navigate to="/admin/academic/subjects" replace />} />

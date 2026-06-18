@@ -8,9 +8,9 @@ import { formatNumber, getErrorMessage } from '../../../shared/utils/formatters'
 import { getLeaderboard } from '../services/student.services';
 
 const rankStyle = (rank) => {
-  if (rank === 1) return 'text-amber-500';
-  if (rank === 2) return 'text-slate-400';
-  if (rank === 3) return 'text-amber-700';
+  if (rank === 1) return 'text-amber-800 dark:text-amber-400';
+  if (rank === 2) return 'text-slate-600 dark:text-slate-400';
+  if (rank === 3) return 'text-orange-800 dark:text-amber-600';
   return 'text-muted-foreground';
 };
 

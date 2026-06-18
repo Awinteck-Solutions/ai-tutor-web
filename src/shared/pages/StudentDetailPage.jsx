@@ -103,6 +103,15 @@ const StudentDetailPage = ({ basePath = '/teacher' }) => {
         description={student.email}
       />
 
+      <div className="mb-4">
+        <Link
+          to={`${basePath}/students/${id}/analyse`}
+          className="inline-flex rounded-xl bg-primary/10 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/15"
+        >
+          Analyse student →
+        </Link>
+      </div>
+
       {enrolledSubjects.length > 0 && (
         <GlassCard className="mb-6 p-6">
           <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">

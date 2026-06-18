@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
 import { PageHeader } from '../../../shared/components/PageShell';
 import { AdesiaBadge } from '../../../shared/components/AdesiaBadge';
@@ -6,6 +7,7 @@ import { PageLoader } from '../../../shared/components/PageLoader';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { formatDateTime, getErrorMessage } from '../../../shared/utils/formatters';
 import { listPlatformOrganizations, upgradeOrganizationPlan } from '../services/platform.services';
+import { platformOrganizationPreviewPath } from '../platform.paths';
 
 const PLANS = ['FREE', 'BASIC', 'PRO', 'ENTERPRISE'];
 
@@ -83,6 +85,7 @@ const OrganizationsPage = () => {
                   <th className="px-4 py-3">Current plan</th>
                   <th className="px-4 py-3">Upgrade</th>
                   <th className="px-4 py-3">Created</th>
+                  <th className="px-4 py-3">Preview</th>
                 </tr>
               </thead>
               <tbody>
@@ -120,6 +123,9 @@ const OrganizationsPage = () => {
                       </select>
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">{formatDateTime(org.createdAt)}</td>
+                    <td className="px-4 py-3">
+                      <Link to={platformOrganizationPreviewPath(org.id ?? org._id)} className="text-xs text-primary hover:underline">Dashboard</Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>

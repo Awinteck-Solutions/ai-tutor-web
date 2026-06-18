@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TextInput } from '@mantine/core';
+import { TextInput, Switch } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '../../../shared/context/AuthContext';
 import { PageHeader } from '../../../shared/components/PageShell';
@@ -10,15 +10,30 @@ import { GradientButton } from '../../../shared/components/GradientButton';
 import { AdesiaBadge } from '../../../shared/components/AdesiaBadge';
 import StudentOnboardingWizard from '../components/StudentOnboardingWizard';
 import { updateProfile, changePassword } from '../../Auth/services/auth.service';
+import { getEmailPreferences, updateEmailPreferences } from '../../Email/services/email.services';
 import { getErrorMessage } from '../../../shared/utils/formatters';
+
+const EMAIL_PREF_LABELS = {
+  reminders: 'Study reminders',
+  digest: 'Weekly digest',
+  productUpdates: 'Product updates',
+  marketing: 'Marketing emails',
+};
 
 const StudentSettingsPage = () => {
   const { organizationId, user, fetchProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [savingEmailPrefs, setSavingEmailPrefs] = useState(false);
   const [tourOpen, setTourOpen] = useState(false);
   const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '' });
+  const [emailPrefs, setEmailPrefs] = useState({
+    reminders: true,
+    digest: true,
+    productUpdates: true,
+    marketing: true,
+  });
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -32,7 +47,17 @@ const StudentSettingsPage = () => {
         lastName: user.lastName || '',
       });
     }
-    setLoading(false);
+    getEmailPreferences()
+      .then((prefs) => {
+        setEmailPrefs({
+          reminders: prefs.reminders,
+          digest: prefs.digest,
+          productUpdates: prefs.productUpdates,
+          marketing: prefs.marketing,
+        });
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [user]);
 
   const handleSaveProfile = async () => {
@@ -45,6 +70,18 @@ const StudentSettingsPage = () => {
       notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const handleSaveEmailPrefs = async () => {
+    setSavingEmailPrefs(true);
+    try {
+      await updateEmailPreferences(emailPrefs);
+      notifications.show({ title: 'Saved', message: 'Email preferences updated', color: 'green' });
+    } catch (err) {
+      notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
+    } finally {
+      setSavingEmailPrefs(false);
     }
   };
 
@@ -76,7 +113,7 @@ const StudentSettingsPage = () => {
       <PageHeader
         title="Settings"
         gradientWord="Settings"
-        description="Update your profile and account password."
+        description="Update your profile, password, and email preferences."
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -131,6 +168,29 @@ const StudentSettingsPage = () => {
             className="!px-4 !py-2"
           >
             {savingPassword ? 'Updating…' : 'Change password'}
+          </GradientButton>
+        </GlassCard>
+
+        <GlassCard className="space-y-4 p-6 lg:col-span-2">
+          <h3 className="font-display text-sm font-semibold text-foreground">Email preferences</h3>
+          <p className="text-xs text-muted-foreground">
+            Transactional emails (password reset, invitations) are always sent.
+          </p>
+          {Object.entries(EMAIL_PREF_LABELS).map(([key, label]) => (
+            <Switch
+              key={key}
+              label={label}
+              checked={emailPrefs[key]}
+              onChange={(e) => setEmailPrefs({ ...emailPrefs, [key]: e.currentTarget.checked })}
+            />
+          ))}
+          <GradientButton
+            type="button"
+            disabled={savingEmailPrefs}
+            onClick={handleSaveEmailPrefs}
+            className="!px-4 !py-2"
+          >
+            {savingEmailPrefs ? 'Saving…' : 'Save email preferences'}
           </GradientButton>
         </GlassCard>
 

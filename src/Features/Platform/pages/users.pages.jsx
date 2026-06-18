@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
 import { PageHeader } from '../../../shared/components/PageShell';
 import { AdesiaBadge } from '../../../shared/components/AdesiaBadge';
@@ -6,22 +7,29 @@ import { PageLoader } from '../../../shared/components/PageLoader';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { formatDateTime, getErrorMessage } from '../../../shared/utils/formatters';
 import { listPlatformUsers, updatePlatformUser } from '../services/platform.services';
+import { platformUserPreviewPath } from '../platform.paths';
 
 const ROLES = ['STUDENT', 'TEACHER', 'PARENT', 'SCHOOL_ADMIN', 'SUPER_ADMIN'];
 const STATUSES = ['ACTIVE', 'INACTIVE', 'SUSPENDED'];
 
 const UsersPage = () => {
+  const [searchParams] = useSearchParams();
+  const orgFilter = searchParams.get('organizationId') ?? '';
   const [users, setUsers] = useState([]);
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
 
   const reload = useCallback((q = search) => {
     setLoading(true);
-    listPlatformUsers({ limit: 50, search: q || undefined })
+    listPlatformUsers({
+      limit: 50,
+      search: q || undefined,
+      organizationId: orgFilter || undefined,
+    })
       .then((data) => setUsers(data.items ?? []))
       .catch((err) => notifications.show({ title: 'Users', message: getErrorMessage(err), color: 'red' }))
       .finally(() => setLoading(false));
-  }, [search]);
+  }, [search, orgFilter]);
 
   useEffect(() => {
     reload();
@@ -44,6 +52,13 @@ const UsersPage = () => {
         gradientWord="users"
         description="Search and manage users across all organizations."
       />
+
+      {orgFilter && (
+        <GlassCard className="mb-4 flex flex-wrap items-center justify-between gap-3 p-4 text-sm">
+          <span>Showing users in one organization.</span>
+          <Link to="/platform/users" className="text-primary hover:underline">Clear filter</Link>
+        </GlassCard>
+      )}
 
       <GlassCard className="mb-4 p-4">
         <form
@@ -79,7 +94,9 @@ const UsersPage = () => {
                   <th className="px-4 py-3">Status</th>
                   <th className="px-4 py-3">Organization</th>
                   <th className="px-4 py-3">Plan</th>
+                  <th className="px-4 py-3">Created</th>
                   <th className="px-4 py-3">Last login</th>
+                  <th className="px-4 py-3">Preview</th>
                 </tr>
               </thead>
               <tbody>
@@ -112,13 +129,17 @@ const UsersPage = () => {
                       </select>
                     </td>
                     <td className="px-4 py-3">
-                      <div>{u.organizationName ?? '—'}</div>
-                      {u.isPersonalWorkspace && (
+                      <div>{u.role === 'SUPER_ADMIN' ? 'Platform' : u.organizationName ?? '—'}</div>
+                      {u.isPersonalWorkspace && u.role !== 'SUPER_ADMIN' && (
                         <AdesiaBadge status="draft" className="mt-1">Personal</AdesiaBadge>
                       )}
                     </td>
                     <td className="px-4 py-3">{u.subscriptionPlan ?? '—'}</td>
+                    <td className="px-4 py-3 text-muted-foreground">{u.createdAt ? formatDateTime(u.createdAt) : '—'}</td>
                     <td className="px-4 py-3 text-muted-foreground">{u.lastLoginAt ? formatDateTime(u.lastLoginAt) : '—'}</td>
+                    <td className="px-4 py-3">
+                      <Link to={platformUserPreviewPath(u.id ?? u._id)} className="text-xs text-primary hover:underline">View</Link>
+                    </td>
                   </tr>
                 ))}
               </tbody>

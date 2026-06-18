@@ -125,6 +125,14 @@
     @apply badge-status border-amber-600/35 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-400;
   }
 
+  .text-warning-heading {
+    @apply text-orange-900 dark:text-amber-400;
+  }
+
+  .text-caution-body {
+    @apply text-orange-950 dark:text-amber-200;
+  }
+
   .badge-processing {
     @apply badge-status animate-pulse border-sky-600/35 bg-sky-50 text-sky-800 dark:border-primary/40 dark:bg-primary/10 dark:text-primary;
   }

@@ -6,6 +6,7 @@ import '@mantine/notifications/styles.css';
 import './index.css';
 import App from './App.jsx';
 import { MantineProvider, createTheme } from '@mantine/core';
+import { ModalsProvider } from '@mantine/modals';
 import { DatesProvider } from '@mantine/dates';
 import { Notifications } from '@mantine/notifications';
 import { AuthProvider } from './shared/context/AuthContext';
@@ -29,7 +30,20 @@ const ThemedMantine = ({ children }) => {
   return (
     <DatesProvider settings={{ consistentWeeks: true }}>
       <MantineProvider theme={mantineTheme} forceColorScheme={theme}>
-        {children}
+        <ModalsProvider
+          modalProps={{
+            centered: true,
+            overlayProps: { backgroundOpacity: 0.55, blur: 3 },
+            classNames: {
+              title: 'font-display font-semibold',
+              header: 'border-b border-border/50',
+              content: 'glass-card !bg-card',
+            },
+          }}
+          labels={{ confirm: 'Confirm', cancel: 'Cancel' }}
+        >
+          {children}
+        </ModalsProvider>
       </MantineProvider>
     </DatesProvider>
   );

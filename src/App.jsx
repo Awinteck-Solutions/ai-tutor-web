@@ -14,6 +14,7 @@ import PlatformLayout from './shared/layouts/PlatformLayout';
 import TeacherLayout from './shared/layouts/TeacherLayout';
 import StudentLayout from './shared/layouts/StudentLayout';
 import { platformRoutes } from './Features/Platform/routes/platform.routes';
+import EmailUnsubscribePage from './Features/Email/pages/unsubscribe.pages';
 import { ForbiddenPage, NotFoundPage } from './shared/components/PageShell';
 import { useAuth } from './shared/context/AuthContext';
 import VisitTracker from './shared/components/VisitTracker';
@@ -37,6 +38,7 @@ function App() {
         <Route path="/admin/auth" element={<AdminLoginPage />} />
         <Route path="/organizations/invites/accept" element={<AcceptInvitePage />} />
         <Route path="/onboarding" element={<OnboardingPage />} />
+        <Route path="/email/unsubscribe" element={<EmailUnsubscribePage />} />
         <Route path="/forbidden" element={<ForbiddenPage />} />
 
         <Route element={<ProtectedRoute allowedRoles={['SUPER_ADMIN']} />}>

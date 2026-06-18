@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { TextInput } from '@mantine/core';
+import { TextInput, Switch } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { useAuth } from '../../../shared/context/AuthContext';
 import { PageHeader } from '../../../shared/components/PageShell';
@@ -8,14 +8,29 @@ import { GlassCard } from '../../../shared/components/GlassCard';
 import { GradientButton } from '../../../shared/components/GradientButton';
 import { AdesiaBadge } from '../../../shared/components/AdesiaBadge';
 import { updateProfile, changePassword } from '../../Auth/services/auth.service';
+import { getEmailPreferences, updateEmailPreferences } from '../../Email/services/email.services';
 import { getErrorMessage } from '../../../shared/utils/formatters';
+
+const EMAIL_PREF_LABELS = {
+  reminders: 'Class & content reminders',
+  digest: 'Weekly digest',
+  productUpdates: 'Product updates',
+  marketing: 'Marketing emails',
+};
 
 const TeacherSettingsPage = () => {
   const { organizationId, user, fetchProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [savingProfile, setSavingProfile] = useState(false);
   const [savingPassword, setSavingPassword] = useState(false);
+  const [savingEmailPrefs, setSavingEmailPrefs] = useState(false);
   const [profileForm, setProfileForm] = useState({ firstName: '', lastName: '' });
+  const [emailPrefs, setEmailPrefs] = useState({
+    reminders: true,
+    digest: true,
+    productUpdates: true,
+    marketing: true,
+  });
   const [passwordForm, setPasswordForm] = useState({
     currentPassword: '',
     newPassword: '',
@@ -29,7 +44,17 @@ const TeacherSettingsPage = () => {
         lastName: user.lastName || '',
       });
     }
-    setLoading(false);
+    getEmailPreferences()
+      .then((prefs) => {
+        setEmailPrefs({
+          reminders: prefs.reminders,
+          digest: prefs.digest,
+          productUpdates: prefs.productUpdates,
+          marketing: prefs.marketing,
+        });
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, [user]);
 
   const handleSaveProfile = async () => {
@@ -42,6 +67,18 @@ const TeacherSettingsPage = () => {
       notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
     } finally {
       setSavingProfile(false);
+    }
+  };
+
+  const handleSaveEmailPrefs = async () => {
+    setSavingEmailPrefs(true);
+    try {
+      await updateEmailPreferences(emailPrefs);
+      notifications.show({ title: 'Saved', message: 'Email preferences updated', color: 'green' });
+    } catch (err) {
+      notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
+    } finally {
+      setSavingEmailPrefs(false);
     }
   };
 
@@ -73,7 +110,7 @@ const TeacherSettingsPage = () => {
       <PageHeader
         title="Settings"
         gradientWord="Settings"
-        description="Update your profile and sign-in password."
+        description="Update your profile, password, and email preferences."
       />
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -130,6 +167,29 @@ const TeacherSettingsPage = () => {
             className="w-full justify-center"
           >
             {savingPassword ? 'Updating…' : 'Update password'}
+          </GradientButton>
+        </GlassCard>
+
+        <GlassCard className="space-y-4 p-6 lg:col-span-2">
+          <h3 className="font-display text-sm font-semibold">Email preferences</h3>
+          <p className="text-xs text-muted-foreground">
+            Transactional emails (password reset, invitations) are always sent.
+          </p>
+          {Object.entries(EMAIL_PREF_LABELS).map(([key, label]) => (
+            <Switch
+              key={key}
+              label={label}
+              checked={emailPrefs[key]}
+              onChange={(e) => setEmailPrefs({ ...emailPrefs, [key]: e.currentTarget.checked })}
+            />
+          ))}
+          <GradientButton
+            type="button"
+            disabled={savingEmailPrefs}
+            onClick={handleSaveEmailPrefs}
+            className="w-full justify-center sm:w-auto"
+          >
+            {savingEmailPrefs ? 'Saving…' : 'Save email preferences'}
           </GradientButton>
         </GlassCard>
       </div>

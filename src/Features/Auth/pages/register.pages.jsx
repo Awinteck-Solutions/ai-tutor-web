@@ -162,6 +162,11 @@ const RegisterPage = () => {
             Sign in
           </Link>
         </p>
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          <Link to="/" className="font-medium text-primary hover:underline">
+            ← Back to home
+          </Link>
+        </p>
         <p className="mt-2 text-center text-xs text-muted-foreground">
           Teachers and admins need an invitation from their organization.
         </p>

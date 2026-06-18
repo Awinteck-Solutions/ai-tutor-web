@@ -34,7 +34,10 @@ import { GradientText } from '../../../shared/components/GradientText';
 import { GradientButton, GhostButton } from '../../../shared/components/GradientButton';
 import { ThemeToggle } from '../../../shared/components/ThemeToggle';
 
-const DEMO_MAILTO = 'mailto:hello@adesia.com?subject=School%20Demo%20Request';
+const DEMO_EMAIL = 'info@adesiatutor.com';
+const DEMO_PHONE = '+233547785025';
+const DEMO_MAILTO = `mailto:${DEMO_EMAIL}?subject=School%20Demo%20Request`;
+const DEMO_TEL = 'tel:+233547785025';
 
 const navLinks = [
   { href: '#audiences', label: 'Who it\'s for' },
@@ -318,6 +321,12 @@ const MarketingPage = () => (
           <p className="mt-6 text-sm text-muted-foreground">
             Trusted by learners, parents, teachers, and schools — from classroom to exam prep.
           </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            School demo:{' '}
+            <a href={DEMO_MAILTO} className="text-primary hover:underline">{DEMO_EMAIL}</a>
+            {' '}or{' '}
+            <a href={DEMO_TEL} className="text-primary hover:underline">{DEMO_PHONE}</a>
+          </p>
         </FadeUp>
       </div>
     </section>
@@ -562,6 +571,11 @@ const MarketingPage = () => (
         <FadeUp delay={2}>
           <div className="mt-10 text-center">
             <GhostButton href={DEMO_MAILTO}>Request a school demo</GhostButton>
+            <p className="mt-3 text-xs text-muted-foreground">
+              <a href={DEMO_MAILTO} className="text-primary hover:underline">{DEMO_EMAIL}</a>
+              {' · '}
+              <a href={DEMO_TEL} className="text-primary hover:underline">{DEMO_PHONE}</a>
+            </p>
           </div>
         </FadeUp>
       </div>
@@ -738,6 +752,12 @@ const MarketingPage = () => (
               </GradientButton>
               <GhostButton href={DEMO_MAILTO}>Request a school demo</GhostButton>
             </div>
+            <p className="relative mt-4 text-xs text-muted-foreground">
+              Demo requests:{' '}
+              <a href={DEMO_MAILTO} className="text-primary hover:underline">{DEMO_EMAIL}</a>
+              {' '}or call{' '}
+              <a href={DEMO_TEL} className="text-primary hover:underline">{DEMO_PHONE}</a>
+            </p>
           </GlassCard>
         </FadeUp>
       </div>
@@ -753,7 +773,8 @@ const MarketingPage = () => (
           <a href="#self-learners" className="hover:text-foreground">Self-learners</a>
           <a href="#" className="hover:text-foreground">Privacy</a>
           <a href="#" className="hover:text-foreground">Terms</a>
-          <a href={DEMO_MAILTO} className="hover:text-foreground">Contact</a>
+          <a href={DEMO_MAILTO} className="hover:text-foreground">{DEMO_EMAIL}</a>
+          <a href={DEMO_TEL} className="hover:text-foreground">{DEMO_PHONE}</a>
         </div>
         <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Adesia</p>
       </div>

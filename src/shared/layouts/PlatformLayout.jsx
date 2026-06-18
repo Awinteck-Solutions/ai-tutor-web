@@ -1,14 +1,14 @@
 import {
-  Activity,
   Building2,
   CreditCard,
   Globe2,
   LayoutDashboard,
+  Mail,
   Server,
-  Shield,
   Users,
+  BookOpen,
+  Wallet,
 } from 'lucide-react';
-import { Link } from 'react-router-dom';
 import AppShell from './AppShell';
 
 export const platformNavGroups = [
@@ -31,12 +31,9 @@ export const platformNavGroups = [
       { label: 'Organizations', path: '/platform/organizations', icon: Building2 },
       { label: 'Users', path: '/platform/users', icon: Users },
       { label: 'Invoices', path: '/platform/invoices', icon: CreditCard },
-    ],
-  },
-  {
-    title: 'Portals',
-    items: [
-      { label: 'Org admin', path: '/admin/dashboard', icon: Shield },
+      { label: 'Payments', path: '/platform/payments', icon: Wallet },
+      { label: 'Content', path: '/platform/content', icon: BookOpen },
+      { label: 'Emails', path: '/platform/emails', icon: Mail },
     ],
   },
 ];
@@ -45,11 +42,7 @@ const PlatformBanner = () => (
   <div className="rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 text-sm text-foreground">
     <span className="font-semibold text-primary">Platform admin</span>
     {' — '}
-    Cross-tenant view for Adesia operations. Payment collection is invoice-only for now.
-    {' '}
-    <Link to="/admin/dashboard" className="font-medium text-primary underline underline-offset-2">
-      Open org admin
-    </Link>
+    Cross-tenant operations for Adesia. Manage organizations, users, billing, and email from this portal.
   </div>
 );
 

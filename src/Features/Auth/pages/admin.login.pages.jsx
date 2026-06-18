@@ -126,6 +126,11 @@ const LoginPage = () => {
             Create a free student account
           </Link>
         </p>
+        <p className="mt-4 text-center text-sm text-muted-foreground">
+          <Link to="/" className="font-medium text-primary hover:underline">
+            ← Back to home
+          </Link>
+        </p>
       </div>
     </div>
   );
