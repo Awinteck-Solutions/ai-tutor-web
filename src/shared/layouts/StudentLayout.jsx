@@ -82,7 +82,6 @@ const StudentLayout = () => {
       <AppShell
         navGroups={studentNavGroups}
         homePath="/student/dashboard"
-        portalLabel="Student"
         banner={<OrgBanner organizationId={organizationId} />}
       />
       <StudentQuickActions />

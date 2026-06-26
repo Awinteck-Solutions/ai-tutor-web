@@ -20,7 +20,7 @@ import {
 import { Link, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../../shared/context/AuthContext';
 import { PageHeader } from '../../../shared/components/PageShell';
-import ListGridToolbar from '../../../shared/components/ListGridToolbar';
+import ListGridToolbar, { filterSelectClass } from '../../../shared/components/ListGridToolbar';
 import DataListFooter from '../../../shared/components/DataListFooter';
 import { useClientList } from '../../../shared/hooks/useClientList';
 import { PageHeaderSkeleton } from '../../../shared/components/TableSkeleton';
@@ -295,7 +295,7 @@ const StudentPracticePage = () => {
             quizList.setFilter('source', v ?? 'all');
             flashcardList.setFilter('source', v ?? 'all');
           }}
-          className="w-40"
+          className={filterSelectClass}
           size="sm"
         />
       </ListGridToolbar>

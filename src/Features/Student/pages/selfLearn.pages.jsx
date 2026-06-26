@@ -28,7 +28,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../shared/context/AuthContext';
 import { PageHeader } from '../../../shared/components/PageShell';
-import ListGridToolbar from '../../../shared/components/ListGridToolbar';
+import ListGridToolbar, { filterSelectClass } from '../../../shared/components/ListGridToolbar';
 import DataListFooter from '../../../shared/components/DataListFooter';
 import { useServerList } from '../../../shared/hooks/useServerList';
 import { GlassCard } from '../../../shared/components/GlassCard';
@@ -57,6 +57,7 @@ import {
   uploadSelfStudyYoutube,
 } from '../services/student.services';
 import LessonGroupManager from '../components/LessonGroupManager';
+import AddToCollectionModal from '../components/AddToCollectionModal';
 import ContinueLearningCard from '../components/ContinueLearningCard';
 
 const DIFFICULTIES = [
@@ -185,6 +186,9 @@ const SelfLearnPage = () => {
   const [subscription, setSubscription] = useState(null);
   const [lessonGroups, setLessonGroups] = useState([]);
   const [createGroupId, setCreateGroupId] = useState('');
+
+  const [collectionOpen, { open: openCollection, close: closeCollection }] = useDisclosure(false);
+  const [collectionLesson, setCollectionLesson] = useState(null);
 
   const reloadSubscription = useCallback(() => {
     if (!organizationId) return;
@@ -421,6 +425,13 @@ const SelfLearnPage = () => {
     event?.preventDefault?.();
     setLessonToDelete(lesson);
     openDeleteLesson();
+  };
+
+  const openCollectionModal = (lesson, event) => {
+    event?.stopPropagation?.();
+    event?.preventDefault?.();
+    setCollectionLesson(lesson);
+    openCollection();
   };
 
   const handleDeleteLesson = async () => {
@@ -745,7 +756,7 @@ const SelfLearnPage = () => {
                     </div>
                     <Link
                       to={`/student/materials/${m.id}/preview`}
-                      state={{ returnTo: '/student/self-learn' }}
+                      state={{ returnTo: '/student/self-learn', lessonId: activeLesson.id }}
                       className="btn-outline !px-2 !py-1 text-xs no-underline"
                     >
                       Preview
@@ -1083,7 +1094,7 @@ const SelfLearnPage = () => {
         </Tabs.List>
 
         <Tabs.Panel value="lessons">
-          <div className="grid gap-6 lg:grid-cols-[minmax(240px,280px)_1fr]">
+          <div className="grid min-w-0 gap-6 lg:grid-cols-[minmax(240px,280px)_1fr]">
             <LessonGroupManager
               organizationId={organizationId}
               onChanged={() => {
@@ -1101,7 +1112,7 @@ const SelfLearnPage = () => {
               }
             />
 
-            <div>
+            <div className="min-w-0">
           <ListGridToolbar
             search={lessonSearch}
             onSearchChange={setLessonSearch}
@@ -1117,7 +1128,7 @@ const SelfLearnPage = () => {
               ]}
               value={lessonFilters.groupId ?? 'all'}
               onChange={(v) => setLessonFilters({ ...lessonFilters, groupId: v ?? 'all' })}
-              className="w-44"
+              className={filterSelectClass}
               size="sm"
             />
             <Select
@@ -1125,7 +1136,7 @@ const SelfLearnPage = () => {
               data={GENERATION_STATUS_OPTIONS}
               value={lessonFilters.generationStatus ?? 'all'}
               onChange={(v) => setLessonFilters({ ...lessonFilters, generationStatus: v ?? 'all' })}
-              className="w-44"
+              className={filterSelectClass}
               size="sm"
             />
           </ListGridToolbar>
@@ -1143,21 +1154,23 @@ const SelfLearnPage = () => {
           ) : (
             <>
               <p className="mb-3 text-sm text-muted-foreground">Tap a lesson to study or add practice</p>
-              <div className="overflow-hidden rounded-xl border border-border/50 bg-card/40">
-                <ul className="grid gap-3 p-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-border/50 bg-card/40">
+                <ul className="grid min-w-0 grid-cols-1 gap-3 p-3 sm:grid-cols-2">
                   {lessons.map((l) => (
-                    <li key={l.id}>
-                      <div className="relative">
+                    <li key={l.id} className="min-w-0">
+                      <div className="flex min-w-0 overflow-hidden rounded-xl border border-border/50 bg-card/40">
                         <button
                           type="button"
                           onClick={() => { setActiveLesson(l); pollStatus(l.id); }}
-                          className="flex w-full items-center gap-3 rounded-xl border border-border/50 bg-card/40 p-4 pr-12 text-left transition hover:border-primary/30 hover:bg-primary/5"
+                          className="flex min-w-0 flex-1 items-center gap-3 p-3 text-left transition hover:bg-primary/5 sm:p-4"
                         >
                           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
                             <BookOpen className="h-5 w-5 text-primary" />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate font-display font-semibold text-foreground">{l.title}</p>
+                            <p className="line-clamp-2 font-display font-semibold leading-snug text-foreground sm:truncate">
+                              {l.title}
+                            </p>
                             {l.groupTitle && (
                               <p className="mt-0.5 truncate text-xs text-primary">{l.groupTitle}</p>
                             )}
@@ -1166,22 +1179,33 @@ const SelfLearnPage = () => {
                             )}
                             {l.generationStatus && !['COMPLETED', 'FAILED'].includes(l.generationStatus) && (
                               <p className="mt-0.5 flex items-center gap-1 text-xs text-muted-foreground">
-                                <Loader2 className="h-3 w-3 animate-spin" />
+                                <Loader2 className="h-3 w-3 shrink-0 animate-spin" />
                                 Preparing…
                               </p>
                             )}
                           </div>
-                          <ChevronDown className="h-4 w-4 shrink-0 -rotate-90 text-muted-foreground" />
+                          <ChevronDown className="hidden h-4 w-4 shrink-0 -rotate-90 text-muted-foreground sm:block" />
                         </button>
-                        <button
-                          type="button"
-                          onClick={(e) => confirmDeleteLesson(l, e)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 rounded-lg p-1.5 text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500"
-                          title="Delete lesson"
-                          aria-label={`Delete ${l.title}`}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
+                        <div className="flex shrink-0 flex-col justify-center gap-0.5 border-l border-border/40 px-1 py-2 sm:flex-row sm:items-center sm:gap-0 sm:px-0 sm:py-0">
+                          <button
+                            type="button"
+                            onClick={(e) => openCollectionModal(l, e)}
+                            className="rounded-lg p-2 text-muted-foreground transition hover:bg-primary/10 hover:text-primary sm:p-1.5"
+                            title="Add to collection"
+                            aria-label={`Add ${l.title} to collection`}
+                          >
+                            <Layers className="h-4 w-4" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => confirmDeleteLesson(l, e)}
+                            className="rounded-lg p-2 text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500 sm:p-1.5"
+                            title="Delete lesson"
+                            aria-label={`Delete ${l.title}`}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
                       </div>
                     </li>
                   ))}
@@ -1214,7 +1238,7 @@ const SelfLearnPage = () => {
               data={MATERIAL_STATUS_OPTIONS}
               value={materialFilters.processingStatus ?? 'all'}
               onChange={(v) => setMaterialFilters({ processingStatus: v ?? 'all' })}
-              className="w-44"
+              className={filterSelectClass}
               size="sm"
             />
           </ListGridToolbar>
@@ -1542,6 +1566,19 @@ const SelfLearnPage = () => {
             : 'Delete this upload? This cannot be undone.'}
         </p>
       </AdesiaModal>
+
+      <AddToCollectionModal
+        opened={collectionOpen}
+        onClose={() => { closeCollection(); setCollectionLesson(null); }}
+        organizationId={organizationId}
+        lessonId={collectionLesson?.id}
+        lessonTitle={collectionLesson?.title}
+        currentGroupId={collectionLesson?.groupId}
+        onChanged={() => {
+          reloadLessons();
+          reloadGroups();
+        }}
+      />
     </>
   );
 };

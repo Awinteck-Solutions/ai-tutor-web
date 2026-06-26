@@ -32,10 +32,10 @@ export default {
         destructive: 'hsl(var(--destructive) / <alpha-value>)',
       },
       boxShadow: {
-        glow: '0 0 48px -10px hsl(var(--primary) / 0.45)',
-        'glow-sm': '0 0 28px -8px hsl(var(--primary) / 0.35)',
-        cta: '0 8px 32px -8px hsl(var(--primary) / 0.35)',
-        card: '0 1px 0 0 hsl(var(--border) / 0.8), 0 12px 40px -20px hsl(0 0% 0% / 0.5)',
+        glow: '0 0 48px -10px hsl(var(--brand, var(--primary)) / 0.45)',
+        'glow-sm': '0 0 28px -8px hsl(var(--brand, var(--primary)) / 0.35)',
+        cta: '0 8px 32px -8px hsl(var(--brand, var(--primary)) / 0.35)',
+        card: 'var(--shadow-card)',
       },
       animation: {
         float: 'float 8s ease-in-out infinite',
@@ -65,9 +65,9 @@ export default {
         },
       },
       backgroundImage: {
-        'gradient-cta': 'linear-gradient(135deg, hsl(48 96% 53%) 0%, hsl(45 100% 48%) 50%, hsl(40 90% 38%) 100%)',
-        'gradient-text': 'linear-gradient(135deg, hsl(48 96% 58%) 0%, hsl(45 100% 50%) 50%, hsl(38 85% 45%) 100%)',
-        'gradient-band': 'linear-gradient(135deg, hsl(48 96% 53% / 0.12) 0%, hsl(0 0% 0% / 0.05) 100%)',
+        'gradient-cta': 'var(--gradient-cta)',
+        'gradient-text': 'var(--gradient-text)',
+        'gradient-band': 'var(--gradient-band)',
         'stat-shine': 'linear-gradient(135deg, hsl(var(--primary) / 0.14) 0%, transparent 55%)',
       },
     },

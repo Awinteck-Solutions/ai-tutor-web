@@ -367,34 +367,31 @@ const StudentDashboardPage = () => {
         <StatCard icon={Target} label="Quizzes left" value={formatNumber(data.pendingQuizzes)} />
       </div>
 
-      <div className="mb-8 grid gap-6 lg:grid-cols-3">
-        <div className="lg:col-span-2">
-          <div className="grid gap-6 sm:grid-cols-2">
-            <GlassCard className="p-6">
-              <div className="mb-4 flex items-center justify-between">
+      <div className="mb-8 grid min-w-0 gap-6 lg:grid-cols-3">
+        <div className="min-w-0 lg:col-span-2">
+          <div className="grid min-w-0 gap-6 md:grid-cols-2">
+            <GlassCard className="min-w-0 overflow-hidden p-6">
+              <div className="mb-4 flex items-center justify-between gap-2">
                 <h3 className="font-display text-sm font-semibold text-foreground">Continue learning</h3>
-                <Link to="/student/lessons" className="text-xs text-primary hover:underline">View all</Link>
+                <Link to="/student/lessons" className="shrink-0 text-xs text-primary hover:underline">View all</Link>
               </div>
               {continueList.length ? (
                 <ul className="space-y-3">
                   {continueList.slice(0, 4).map((item) => (
-                    <li key={item.lessonId}>
+                    <li key={item.lessonId} className="min-w-0">
                       <Link
                         to={`/student/lessons/${item.lessonId}`}
-                        className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-muted/30 px-4 py-3 no-underline transition hover:border-primary/30"
+                        className="flex min-w-0 items-center gap-3 rounded-xl border border-border/50 bg-muted/30 px-4 py-3 no-underline transition hover:border-primary/30"
                       >
-                        <div className="min-w-0">
-                          <p className="truncate font-medium text-foreground">
-                            {item.title}
-                            {' '}
-                            <StudentSourceLabel
-                              isPersonal={item.isPersonal}
-                              organizationName={organizationName}
-                              isSchoolStudent={isSchoolStudent}
-                              className="ml-1 inline"
-                            />
-                          </p>
-                          <p className="text-xs text-muted-foreground">
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-medium text-foreground">{item.title}</p>
+                          <StudentSourceLabel
+                            isPersonal={item.isPersonal}
+                            organizationName={organizationName}
+                            isSchoolStudent={isSchoolStudent}
+                            className="mt-0.5 block truncate"
+                          />
+                          <p className="truncate text-xs text-muted-foreground">
                             {item.progressPercent > 0
                               ? `${Math.round(item.progressPercent)}% complete`
                               : 'Opened — continue reading'}
@@ -410,20 +407,20 @@ const StudentDashboardPage = () => {
               )}
             </GlassCard>
 
-            <GlassCard className="p-6">
-              <div className="mb-4 flex items-center justify-between">
+            <GlassCard className="min-w-0 overflow-hidden p-6">
+              <div className="mb-4 flex items-center justify-between gap-2">
                 <h3 className="font-display text-sm font-semibold text-foreground">Recommended</h3>
               </div>
               {(data.recommendedLessons?.length ?? 0) ? (
                 <ul className="space-y-3">
                   {data.recommendedLessons.slice(0, 4).map((lesson) => (
-                    <li key={lesson.id}>
+                    <li key={lesson.id} className="min-w-0">
                       <Link
                         to={`/student/lessons/${lesson.id}`}
-                        className="flex items-center justify-between rounded-xl border border-border/50 bg-muted/30 px-4 py-3 no-underline transition hover:border-primary/30"
+                        className="flex min-w-0 items-center gap-3 rounded-xl border border-border/50 bg-muted/30 px-4 py-3 no-underline transition hover:border-primary/30"
                       >
-                        <p className="font-medium text-foreground">{lesson.title}</p>
-                        <ChevronRight className="h-4 w-4 text-primary" />
+                        <p className="min-w-0 flex-1 truncate font-medium text-foreground">{lesson.title}</p>
+                        <ChevronRight className="h-4 w-4 shrink-0 text-primary" />
                       </Link>
                     </li>
                   ))}
@@ -435,13 +432,13 @@ const StudentDashboardPage = () => {
           </div>
 
           {(data.weakTopics?.length ?? 0) > 0 && (
-            <GlassCard className="mt-6 p-6">
+            <GlassCard className="mt-6 min-w-0 overflow-hidden p-6">
               <h3 className="mb-3 font-display text-sm font-semibold text-foreground">Focus areas</h3>
               <div className="flex flex-wrap gap-2">
                 {data.weakTopics.map((topic) => (
                   <span
                     key={topic}
-                    className="rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300"
+                    className="max-w-full truncate rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-xs font-medium text-amber-700 dark:text-amber-300"
                   >
                     {topic}
                   </span>
@@ -451,7 +448,9 @@ const StudentDashboardPage = () => {
           )}
         </div>
 
-        <LeaderboardPanel compact />
+        <div className="min-w-0">
+          <LeaderboardPanel compact />
+        </div>
       </div>
 
       {recentMaterials.length > 0 && (

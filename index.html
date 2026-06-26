@@ -1,7 +1,19 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <script>
+      (function () {
+        var themes = ['light', 'dark', 'edu'];
+        var pref = localStorage.getItem('adesia-theme-preference');
+        var legacy = localStorage.getItem('adesia-theme');
+        if (!themes.includes(pref) && pref !== 'auto') pref = themes.includes(legacy) ? legacy : 'auto';
+        var hour = new Date().getHours();
+        var autoTheme = hour >= 6 && hour < 18 ? 'light' : 'dark';
+        var theme = pref === 'auto' || !themes.includes(pref) ? autoTheme : pref;
+        document.documentElement.classList.add(theme);
+      })();
+    </script>
     <link rel="icon" href="/icon.svg" type="image/svg+xml" sizes="any" />
     <link rel="shortcut icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/adesia-icon.svg" />

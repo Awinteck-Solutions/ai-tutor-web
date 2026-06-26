@@ -29,6 +29,7 @@ const AdesiaDataTable = ({
   searchPlaceholder = 'Search…',
   search: controlledSearch,
   onSearchChange,
+  renderMobileItem,
 }) => {
   const [internalSearch, setInternalSearch] = useState('');
   const searchValue = controlledSearch ?? internalSearch;
@@ -87,7 +88,23 @@ const AdesiaDataTable = ({
         </div>
       )}
 
-      <div className="overflow-x-auto">
+      {renderMobileItem ? (
+        <div className="md:hidden">
+          {!rows.length ? (
+            <p className="px-4 py-14 text-center text-sm text-muted-foreground">{emptyMessage}</p>
+          ) : (
+            <ul className="space-y-3 p-4">
+              {rows.map((row, index) => (
+                <li key={getRowKey(row, index)}>
+                  {renderMobileItem(row, index)}
+                </li>
+              ))}
+            </ul>
+          )}
+        </div>
+      ) : null}
+
+      <div className={`overflow-x-auto ${renderMobileItem ? 'hidden md:block' : ''}`}>
         <table className="data-table min-w-0 sm:min-w-[640px]">
           <thead>
             <tr>

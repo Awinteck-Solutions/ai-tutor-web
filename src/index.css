@@ -3,21 +3,28 @@
 @tailwind utilities;
 
 @layer base {
-  :root {
-    --background: 0 0% 98%;
-    --foreground: 0 0% 8%;
+  :root,
+  .light {
+    /* Neutral light base — gold only on CTAs, links, and small accent chips */
+    --background: 220 20% 98%;
+    --foreground: 224 28% 12%;
     --card: 0 0% 100%;
-    --card-foreground: 0 0% 8%;
-    --border: 0 0% 88%;
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 40%;
-    --primary: 48 96% 50%;
+    --card-foreground: 224 28% 12%;
+    --border: 220 13% 91%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+    --primary: 36 90% 34%;
     --primary-foreground: 0 0% 6%;
-    --secondary: 45 100% 42%;
+    --secondary: 42 88% 40%;
     --secondary-foreground: 0 0% 6%;
-    --accent: 48 90% 55%;
-    --accent-foreground: 0 0% 6%;
+    --accent: 48 96% 50%;
+    --accent-foreground: 0 0% 8%;
     --destructive: 0 84% 50%;
+    --brand: 48 96% 53%;
+    --gradient-cta: linear-gradient(135deg, hsl(48 96% 53%) 0%, hsl(42 95% 45%) 50%, hsl(36 90% 38%) 100%);
+    --gradient-text: linear-gradient(135deg, hsl(42 95% 38%) 0%, hsl(36 90% 32%) 100%);
+    --gradient-band: linear-gradient(180deg, hsl(220 20% 99%) 0%, hsl(220 16% 95%) 100%);
+    --shadow-card: 0 1px 0 0 hsl(var(--border) / 0.6), 0 8px 24px -8px hsl(220 20% 12% / 0.08);
   }
 
   .dark {
@@ -35,6 +42,33 @@
     --accent: 48 90% 58%;
     --accent-foreground: 0 0% 4%;
     --destructive: 0 84% 60%;
+    --brand: 48 96% 53%;
+    --gradient-cta: linear-gradient(135deg, hsl(48 96% 53%) 0%, hsl(45 100% 45%) 50%, hsl(40 90% 38%) 100%);
+    --gradient-text: linear-gradient(135deg, hsl(48 96% 58%) 0%, hsl(45 100% 50%) 50%, hsl(38 85% 45%) 100%);
+    --gradient-band: linear-gradient(135deg, hsl(48 96% 53% / 0.12) 0%, hsl(0 0% 0% / 0.05) 100%);
+    --shadow-card: 0 1px 0 0 hsl(var(--border) / 0.8), 0 12px 40px -20px hsl(0 0% 0% / 0.5);
+  }
+
+  .edu {
+    --background: 210 50% 99%;
+    --foreground: 222 47% 11%;
+    --card: 0 0% 100%;
+    --card-foreground: 222 47% 11%;
+    --border: 214 32% 90%;
+    --muted: 210 40% 97%;
+    --muted-foreground: 215 16% 40%;
+    --primary: 221 83% 53%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 199 89% 42%;
+    --secondary-foreground: 0 0% 100%;
+    --accent: 262 83% 58%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 50%;
+    --brand: 221 83% 53%;
+    --gradient-cta: linear-gradient(135deg, hsl(221 83% 53%) 0%, hsl(199 89% 42%) 100%);
+    --gradient-text: linear-gradient(135deg, hsl(221 83% 45%) 0%, hsl(199 89% 38%) 50%, hsl(262 83% 52%) 100%);
+    --gradient-band: linear-gradient(135deg, hsl(221 83% 53% / 0.08) 0%, hsl(199 89% 42% / 0.06) 100%);
+    --shadow-card: 0 1px 0 0 hsl(var(--border) / 0.6), 0 8px 24px -8px hsl(220 20% 12% / 0.08);
   }
 
   html {
@@ -62,6 +96,14 @@
 @layer components {
   .glass-card {
     @apply rounded-2xl border border-border/60 bg-card/80 shadow-card backdrop-blur-xl;
+  }
+
+  .light .glass-card,
+  .light .glass-card-hover {
+    @apply bg-card border-border/70 backdrop-blur-none;
+    box-shadow:
+      0 1px 2px hsl(220 20% 12% / 0.04),
+      0 6px 20px -6px hsl(220 20% 12% / 0.08);
   }
 
   .glass-card-hover {
@@ -101,7 +143,7 @@
   }
 
   .nav-link-active {
-    @apply border border-emerald-600/30 bg-emerald-50 font-semibold text-emerald-900 shadow-glow-sm dark:border-primary/30 dark:bg-primary/10 dark:text-primary;
+    @apply border border-primary/20 bg-primary/10 font-semibold text-primary;
   }
 
   .nav-link-collapsed {
@@ -114,7 +156,7 @@
 
   .badge-ready,
   .badge-success {
-    @apply badge-status border-emerald-600/35 bg-emerald-50 text-emerald-800 dark:border-primary/40 dark:bg-primary/15 dark:text-primary;
+    @apply badge-status border-primary/25 bg-primary/10 text-primary;
   }
 
   .badge-draft {
@@ -122,7 +164,7 @@
   }
 
   .badge-due {
-    @apply badge-status border-amber-600/35 bg-amber-50 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-400;
+    @apply badge-status border-amber-600/30 bg-amber-500/10 text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/15 dark:text-amber-400;
   }
 
   .text-warning-heading {
@@ -186,7 +228,35 @@
   }
 
   .alert-warning {
-    @apply mb-6 rounded-2xl border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-foreground;
+    @apply mb-6 rounded-2xl border border-amber-500/25 bg-amber-500/10 px-4 py-3 text-sm text-foreground;
+  }
+
+  .dark .alert-warning {
+    @apply border-primary/30 bg-primary/10;
+  }
+
+  /* Marketing landing — crisp white panels on neutral light background */
+  .light .marketing-page header {
+    background: hsl(0 0% 100% / 0.9);
+    border-color: hsl(var(--border) / 0.85);
+  }
+
+  .light .marketing-page footer {
+    background: hsl(var(--background));
+    border-color: hsl(var(--border) / 0.85);
+  }
+
+  .light .marketing-page .glass-card,
+  .light .marketing-page .glass-card-hover {
+    background: hsl(0 0% 100%) !important;
+    border-color: hsl(var(--border) / 0.9);
+    box-shadow:
+      0 1px 2px hsl(220 20% 12% / 0.04),
+      0 8px 24px -8px hsl(220 20% 12% / 0.07);
+  }
+
+  .light .marketing-page .bg-gradient-band {
+    background: var(--gradient-band) !important;
   }
 }
 
@@ -234,8 +304,8 @@
 .mantine-Select-label,
 .mantine-TextInput-label { color: hsl(var(--muted-foreground)) !important; }
 .mantine-Button-root[data-variant='filled'] {
-  background: linear-gradient(135deg, hsl(48 96% 53%) 0%, hsl(45 100% 45%) 100%) !important;
-  color: hsl(0 0% 4%) !important;
+  background: var(--gradient-cta) !important;
+  color: hsl(var(--primary-foreground)) !important;
   font-weight: 700 !important;
 }
 .mantine-Button-root[data-variant='outline'] {
@@ -248,3 +318,27 @@
 }
 .mantine-Loader-root { --loader-color: hsl(var(--primary)) !important; }
 .mantine-Badge-root { text-transform: uppercase; font-size: 10px; letter-spacing: 0.05em; }
+
+/* Light mode: subtle gold tint on primary chips only (not page-wide amber wash) */
+.light [class*='bg-primary/10'],
+.light [class*='bg-primary/15'],
+:root:not(.dark):not(.edu) [class*='bg-primary/10'],
+:root:not(.dark):not(.edu) [class*='bg-primary/15'] {
+  background-color: hsl(48 96% 53% / 0.08) !important;
+}
+
+.light [class*='bg-primary/10'][class*='text-primary'],
+.light [class*='bg-primary/15'][class*='text-primary'],
+:root:not(.dark):not(.edu) [class*='bg-primary/10'][class*='text-primary'],
+:root:not(.dark):not(.edu) [class*='bg-primary/15'][class*='text-primary'] {
+  color: hsl(var(--primary)) !important;
+}
+
+.light [class*='border-primary/20'],
+.light [class*='border-primary/25'],
+.light [class*='border-primary/30'],
+:root:not(.dark):not(.edu) [class*='border-primary/20'],
+:root:not(.dark):not(.edu) [class*='border-primary/25'],
+:root:not(.dark):not(.edu) [class*='border-primary/30'] {
+  border-color: hsl(48 96% 53% / 0.22) !important;
+}

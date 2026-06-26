@@ -1,56 +1,36 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Link, useParams, useSearchParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import { Drawer } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
 import {
   Bot,
-  ExternalLink,
   MessageCircle,
-  MessageSquare,
   NotebookPen,
   Plus,
   Sparkles,
   X,
 } from 'lucide-react';
 import { useAuth } from '../../../shared/context/AuthContext';
+import { useTheme } from '../../../shared/context/ThemeContext';
 import ChatPanel from './ChatPanel';
 import NotesWorkspace from './NotesWorkspace';
-
-const SOLID_DRAWER = {
-  content: 'student-drawer-solid flex flex-col !bg-card !backdrop-blur-none border-l border-border shadow-xl',
-  header: 'student-drawer-solid-header !bg-card text-foreground',
-  body: 'student-drawer-solid !bg-card',
-};
 
 const QUICK_ACTIONS = [
   {
     id: 'chat',
     label: 'Quick chat',
-    description: 'Pop-up tutor',
+    description: 'Pick a lesson, then chat',
     icon: MessageCircle,
-    iconClass: 'bg-amber-400/20 text-amber-700 dark:bg-amber-400/25 dark:text-amber-300',
-    rowClass: 'hover:bg-amber-500/10 hover:border-amber-500/25 border-transparent',
+    iconClass: 'bg-primary/15 text-primary',
+    rowClass: 'hover:bg-primary/10 hover:border-primary/30 border-transparent',
     onClick: 'chat',
-    requiresLesson: true,
-  },
-  {
-    id: 'full-chat',
-    label: 'Full chat page',
-    description: 'Sessions & history',
-    icon: MessageSquare,
-    iconClass: 'bg-sky-500/15 text-sky-700 dark:bg-sky-400/20 dark:text-sky-300',
-    rowClass: 'hover:bg-sky-500/10 hover:border-sky-500/25 border-transparent',
-    href: (lessonId) =>
-      lessonId ? `/student/chat?lessonId=${lessonId}` : '/student/chat',
-    requiresLesson: false,
   },
   {
     id: 'notes',
     label: 'Notes',
     description: 'Write & attach',
     icon: NotebookPen,
-    iconClass: 'bg-emerald-500/15 text-emerald-700 dark:bg-emerald-400/20 dark:text-emerald-300',
-    rowClass: 'hover:bg-emerald-500/10 hover:border-emerald-500/25 border-transparent',
+    iconClass: 'bg-accent/15 text-accent',
+    rowClass: 'hover:bg-accent/10 hover:border-accent/30 border-transparent',
     onClick: 'notes',
   },
 ];
@@ -61,8 +41,27 @@ const FAB_ICON_CYCLE = [
   { Icon: NotebookPen, label: 'Notes' },
 ];
 
+const SPARKLE_CLASSES = {
+  light: [
+    'text-primary/35',
+    'text-primary/25 [animation-delay:1.3s]',
+    'text-secondary/30 [animation-delay:2.6s]',
+  ],
+  dark: [
+    'text-amber-100',
+    'text-yellow-200 [animation-delay:1.3s]',
+    'text-white/90 [animation-delay:2.6s]',
+  ],
+  edu: [
+    'text-primary/40',
+    'text-secondary/35 [animation-delay:1.3s]',
+    'text-accent/30 [animation-delay:2.6s]',
+  ],
+};
+
 const StudentQuickActions = () => {
   const { organizationId } = useAuth();
+  const { theme } = useTheme();
   const { lessonId: routeLessonId } = useParams();
   const [searchParams] = useSearchParams();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -71,6 +70,7 @@ const StudentQuickActions = () => {
   const [fabIconIndex, setFabIconIndex] = useState(0);
 
   const defaultLessonId = routeLessonId || searchParams.get('lessonId') || undefined;
+  const sparkleClasses = SPARKLE_CLASSES[theme] ?? SPARKLE_CLASSES.light;
 
   useEffect(() => {
     if (menuOpen) return undefined;
@@ -93,17 +93,7 @@ const StudentQuickActions = () => {
 
   const handleAction = (action) => {
     setMenuOpen(false);
-    if (action === 'chat') {
-      if (!defaultLessonId) {
-        notifications.show({
-          title: 'Open a lesson first',
-          message: 'AI chat is available within a lesson.',
-          color: 'orange',
-        });
-        return;
-      }
-      setChatOpen(true);
-    }
+    if (action === 'chat') setChatOpen(true);
     if (action === 'notes') setNotesOpen(true);
   };
 
@@ -142,33 +132,15 @@ const StudentQuickActions = () => {
                         {item.description}
                       </span>
                     </span>
-                    {item.href && (
-                      <ExternalLink className="h-3.5 w-3.5 shrink-0 text-muted-foreground opacity-60" />
-                    )}
                   </>
                 );
-
-                const rowClass = `flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${item.rowClass}`;
-
-                if (item.href) {
-                  return (
-                    <Link
-                      key={item.id}
-                      to={item.href(defaultLessonId)}
-                      onClick={() => setMenuOpen(false)}
-                      className={`${rowClass} no-underline`}
-                    >
-                      {content}
-                    </Link>
-                  );
-                }
 
                 return (
                   <button
                     key={item.id}
                     type="button"
                     onClick={() => handleAction(item.onClick)}
-                    className={rowClass}
+                    className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition ${item.rowClass}`}
                   >
                     {content}
                   </button>
@@ -182,15 +154,15 @@ const StudentQuickActions = () => {
           {!menuOpen && (
             <>
               <Sparkles
-                className="pointer-events-none absolute -right-1 -top-1 h-4 w-4 animate-sparkle-twinkle text-amber-100 drop-shadow-sm"
+                className={`pointer-events-none absolute -right-1 -top-1 h-4 w-4 animate-sparkle-twinkle drop-shadow-sm ${sparkleClasses[0]}`}
                 aria-hidden
               />
               <Sparkles
-                className="pointer-events-none absolute -left-2 top-2 h-3.5 w-3.5 animate-sparkle-twinkle text-yellow-200 drop-shadow-sm [animation-delay:1.3s]"
+                className={`pointer-events-none absolute -left-2 top-2 h-3.5 w-3.5 animate-sparkle-twinkle drop-shadow-sm ${sparkleClasses[1]}`}
                 aria-hidden
               />
               <Sparkles
-                className="pointer-events-none absolute -top-2 left-1/2 h-3 w-3 -ml-1.5 animate-sparkle-twinkle text-white/90 drop-shadow-sm [animation-delay:2.6s]"
+                className={`pointer-events-none absolute -top-2 left-1/2 h-3 w-3 -ml-1.5 animate-sparkle-twinkle drop-shadow-sm ${sparkleClasses[2]}`}
                 aria-hidden
               />
             </>
@@ -199,7 +171,7 @@ const StudentQuickActions = () => {
           <button
             type="button"
             onClick={() => setMenuOpen((o) => !o)}
-            className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-amber-400 to-amber-600 text-amber-950 shadow-lg shadow-amber-500/30 transition hover:scale-105 active:scale-95"
+            className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-cta text-primary-foreground shadow-cta transition hover:scale-105 hover:brightness-105 active:scale-95"
             aria-label={menuOpen ? 'Close quick actions' : FAB_ICON_CYCLE[fabIconIndex].label}
             aria-expanded={menuOpen}
           >
@@ -221,18 +193,22 @@ const StudentQuickActions = () => {
       <Drawer
         opened={notesOpen}
         onClose={() => setNotesOpen(false)}
-        title={(
-          <span className="flex items-center gap-2 font-display font-semibold text-foreground">
-            <NotebookPen className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-            My notes
-          </span>
-        )}
+        withCloseButton={false}
+        padding={0}
         position="right"
-        size="lg"
-        classNames={SOLID_DRAWER}
+        size="100%"
+        classNames={{
+          content: 'student-drawer-solid flex flex-col !bg-card !backdrop-blur-none border-l border-border shadow-xl max-w-full sm:max-w-[min(100vw,720px)]',
+          header: 'hidden',
+          body: 'student-drawer-solid !bg-card h-full p-0',
+        }}
         overlayProps={{ backgroundOpacity: 0.55 }}
       >
-        <NotesWorkspace defaultLessonId={defaultLessonId} embedded />
+        <NotesWorkspace
+          defaultLessonId={defaultLessonId}
+          embedded
+          onClose={() => setNotesOpen(false)}
+        />
       </Drawer>
     </>
   );

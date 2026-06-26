@@ -5,6 +5,7 @@ import { Bell, BellRing, Search } from 'lucide-react';
 import { PageHeader } from '../../../shared/components/PageShell';
 import { PageHeaderSkeleton } from '../../../shared/components/TableSkeleton';
 import AdesiaDataTable from '../../../shared/components/AdesiaDataTable';
+import NotificationItemCard from '../../../shared/components/NotificationItemCard';
 import { AdesiaBadge } from '../../../shared/components/AdesiaBadge';
 import { GradientButton } from '../../../shared/components/GradientButton';
 import { useServerList } from '../../../shared/hooks/useServerList';
@@ -134,6 +135,9 @@ const StudentNotificationsPage = () => {
         onPageChange={setPage}
         paginate={false}
         emptyMessage="No notifications in this view."
+        renderMobileItem={(row) => (
+          <NotificationItemCard notification={row} onMarkRead={markRead} />
+        )}
       />
     </>
   );

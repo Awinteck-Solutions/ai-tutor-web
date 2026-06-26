@@ -58,7 +58,7 @@ const Sidebar = ({
           <AdesiaIcon className="h-9 w-9 rounded-xl shadow-glow-sm ring-1 ring-primary/30" />
         </Link>
       )}
-      {!collapsed && (
+      {!collapsed && portalLabel && (
         <span className="shrink-0 rounded-full border border-primary/30 bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-primary">
           {portalLabel}
         </span>
@@ -212,7 +212,7 @@ const AppShell = ({
             <ThemeToggle />
           </header>
 
-          <main className="flex-1 p-4 lg:p-8">
+          <main className="min-w-0 flex-1 overflow-x-hidden p-4 lg:p-8">
             {banner}
             <Outlet />
           </main>

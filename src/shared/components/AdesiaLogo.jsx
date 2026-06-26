@@ -11,8 +11,9 @@ export const AdesiaLogo = ({ className = '', showText = true, size = 'md', to = 
         className={`${sizes[size]} shrink-0 rounded-xl shadow-glow-sm ring-1 ring-primary/30`}
       />
       {showText && (
-        <span className={`font-display font-bold tracking-tight text-foreground ${textSizes[size]}`}>
-          Adesia Tutor
+        <span className={`font-display font-bold tracking-tight ${textSizes[size]}`}>
+          <span className="text-foreground">Adesia </span>
+          <span className="gradient-text">Tutor</span>
         </span>
       )}
     </Link>

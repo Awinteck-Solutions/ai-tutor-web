@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { StrictMode, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
@@ -27,9 +27,17 @@ const mantineTheme = createTheme({
 
 const ThemedMantine = ({ children }) => {
   const { theme } = useTheme();
+  const colorScheme = theme === 'dark' ? 'dark' : 'light';
+  const primaryColor = theme === 'dark' ? 'yellow' : theme === 'edu' ? 'indigo' : 'yellow';
+
+  const themedMantine = useMemo(
+    () => createTheme({ ...mantineTheme, primaryColor }),
+    [primaryColor],
+  );
+
   return (
     <DatesProvider settings={{ consistentWeeks: true }}>
-      <MantineProvider theme={mantineTheme} forceColorScheme={theme}>
+      <MantineProvider theme={themedMantine} forceColorScheme={colorScheme}>
         <ModalsProvider
           modalProps={{
             centered: true,

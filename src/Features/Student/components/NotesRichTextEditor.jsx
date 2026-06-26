@@ -43,8 +43,8 @@ const NotesRichTextEditor = ({ value, onChange, disabled = false, placeholder })
   if (!editor) return null;
 
   return (
-    <RichTextEditor editor={editor} className="notes-rich-text rounded-xl border border-border/50">
-      <RichTextEditor.Toolbar sticky stickyOffset={0}>
+    <RichTextEditor editor={editor} className="notes-rich-text min-w-0 overflow-hidden rounded-xl border border-border/50">
+      <RichTextEditor.Toolbar sticky stickyOffset={0} className="flex-wrap gap-1">
         <RichTextEditor.ControlsGroup>
           <RichTextEditor.Bold />
           <RichTextEditor.Italic />

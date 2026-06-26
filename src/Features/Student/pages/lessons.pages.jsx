@@ -8,7 +8,7 @@ import { PageHeader } from '../../../shared/components/PageShell';
 import { CardGridSkeleton, PageHeaderSkeleton, TableSkeleton } from '../../../shared/components/TableSkeleton';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { AdesiaBadge } from '../../../shared/components/AdesiaBadge';
-import ListGridToolbar from '../../../shared/components/ListGridToolbar';
+import ListGridToolbar, { filterSelectClass } from '../../../shared/components/ListGridToolbar';
 import AdesiaDataTable from '../../../shared/components/AdesiaDataTable';
 import DataListFooter from '../../../shared/components/DataListFooter';
 import { useClientList } from '../../../shared/hooks/useClientList';
@@ -247,7 +247,7 @@ const StudentLessonsPage = () => {
           ]}
           value={filterValues.source ?? 'all'}
           onChange={(v) => setFilter('source', v ?? 'all')}
-          className="w-40"
+          className={filterSelectClass}
           size="sm"
         />
         <Select
@@ -255,9 +255,10 @@ const StudentLessonsPage = () => {
           data={collectionOptions}
           value={filterValues.collection ?? 'all'}
           onChange={(v) => setFilter('collection', v ?? 'all')}
-          className="w-48"
+          className={filterSelectClass}
           size="sm"
         />
+
         <Select
           label="Progress"
           data={[
@@ -268,12 +269,12 @@ const StudentLessonsPage = () => {
           ]}
           value={filterValues.progress ?? 'all'}
           onChange={(v) => setFilter('progress', v ?? 'all')}
-          className="w-44"
+          className={filterSelectClass}
           size="sm"
         />
       </ListGridToolbar>
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+      <div className="mb-4 flex min-w-0 flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         {!loading && (
           <p className="text-sm text-muted-foreground">
             {totalItems}
@@ -285,7 +286,10 @@ const StudentLessonsPage = () => {
               : ''}
           </p>
         )}
+
         <SegmentedControl
+          fullWidth
+          className="sm:!w-auto"
           size="xs"
           value={view}
           onChange={setView}
@@ -325,6 +329,7 @@ const StudentLessonsPage = () => {
               </p>
             )}
           </div>
+     
           <DataListFooter
             rangeStart={rangeStart}
             rangeEnd={rangeEnd}

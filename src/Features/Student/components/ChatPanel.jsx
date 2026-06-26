@@ -8,10 +8,10 @@ const ChatPanel = ({ opened, onClose, context = {} }) => (
     withCloseButton={false}
     padding={0}
     position="right"
-    size="90%"
+    size="100%"
     overlayProps={{ backgroundOpacity: 0.55 }}
     classNames={{
-      content: 'student-drawer-solid !bg-card !backdrop-blur-none p-0',
+      content: 'student-drawer-solid !bg-card !backdrop-blur-none p-0 max-w-full sm:max-w-[min(100vw,720px)]',
       header: 'hidden',
       body: 'student-drawer-solid !bg-card h-full p-0',
     }}

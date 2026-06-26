@@ -33,6 +33,7 @@ import { GlassCard } from '../../../shared/components/GlassCard';
 import { GradientText } from '../../../shared/components/GradientText';
 import { GradientButton, GhostButton } from '../../../shared/components/GradientButton';
 import { ThemeToggle } from '../../../shared/components/ThemeToggle';
+import ScrollToTopButton from '../components/ScrollToTopButton';
 
 const DEMO_EMAIL = 'info@adesiatutor.com';
 const DEMO_PHONE = '+233547785025';
@@ -254,10 +255,10 @@ const FeatureList = ({ items, icon: Icon = CheckCircle2 }) => (
 );
 
 const MarketingPage = () => (
-  <div className="relative min-h-screen overflow-x-hidden bg-background text-foreground">
+  <div className="marketing-page relative min-h-screen bg-background text-foreground">
     <GlowOrbs />
 
-    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/80 backdrop-blur-xl">
+    <header className="sticky top-0 z-50 border-b border-border/50 bg-background/95 backdrop-blur-xl supports-[backdrop-filter]:bg-background/80">
       <div className="container-wide flex h-16 items-center justify-between">
         <AdesiaLogo />
         <nav className="hidden items-center gap-6 lg:flex">
@@ -286,6 +287,7 @@ const MarketingPage = () => (
       </div>
     </header>
 
+    <div className="overflow-x-hidden">
     {/* Hero */}
     <section className="section-padding relative">
       <div className="container-narrow text-center">
@@ -779,6 +781,8 @@ const MarketingPage = () => (
         <p className="text-xs text-muted-foreground">© {new Date().getFullYear()} Adesia</p>
       </div>
     </footer>
+    </div>
+    <ScrollToTopButton />
   </div>
 );
 

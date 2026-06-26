@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   BookOpen,
+  List,
   MessageCircle,
   Plus,
   RotateCw,
@@ -72,6 +73,7 @@ const ChatExperience = ({
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
   const abortControllerRef = useRef(null);
@@ -112,18 +114,21 @@ const ChatExperience = ({
   useEffect(() => {
     if (!organizationId) return;
     refreshData().then(({ lessons: lessonList, sessions: sessionList }) => {
-      const initialLessonId = context.lessonId
-        ?? lessonList.find((l) => l.generationStatus === 'COMPLETED')?.id
-        ?? lessonList[0]?.id
-        ?? null;
-      if (!initialLessonId) return;
+      const initialLessonId = context.lessonId ?? null;
+      if (!initialLessonId) {
+        setSelectedLessonId(null);
+        setSessionId(null);
+        setMessages([]);
+        setMobileSidebarOpen(true);
+        return;
+      }
       setSelectedLessonId(initialLessonId);
       const latestSession = sessionList
         .filter((s) => s.lessonId === initialLessonId)
         .sort((a, b) => new Date(b.updatedAt ?? 0) - new Date(a.updatedAt ?? 0))[0];
       if (latestSession?.id) loadSession(latestSession.id);
     });
-  }, [organizationId, context.lessonId, refreshData, loadSession]);
+  }, [organizationId, context.lessonId, fullPage, refreshData, loadSession]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -182,6 +187,7 @@ const ChatExperience = ({
       setMessages([]);
       setInput('');
     }
+    setMobileSidebarOpen(false);
     if (fullPage) {
       navigate(`/student/chat?lessonId=${lessonId}`, { replace: true });
     }
@@ -267,28 +273,31 @@ const ChatExperience = ({
   };
 
   const shellClass = fullPage
-    ? 'flex h-[calc(100dvh-10rem)] min-h-[520px] overflow-hidden rounded-2xl border border-border/60 bg-card shadow-card'
-    : 'flex h-full min-h-[100dvh] overflow-hidden bg-card';
+    ? 'relative flex h-[calc(100dvh-10rem)] min-h-[420px] overflow-hidden rounded-2xl border border-border/60 bg-card shadow-card sm:min-h-[520px]'
+    : 'relative flex h-full min-h-[100dvh] overflow-hidden bg-card';
 
   return (
     <div className={shellClass}>
-      <aside className="flex w-[280px] shrink-0 flex-col border-r border-border/60 bg-muted/25">
+      {mobileSidebarOpen && (
+        <button
+          type="button"
+          className="fixed inset-0 z-20 bg-black/45 md:hidden"
+          aria-label="Close lesson list"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
+      <aside
+        className={`flex w-[min(100vw-3rem,280px)] shrink-0 flex-col border-r border-border/60 bg-card max-md:fixed max-md:inset-y-0 max-md:left-0 max-md:z-30 max-md:shadow-xl max-md:transition-transform md:relative ${
+          mobileSidebarOpen ? 'max-md:translate-x-0' : 'max-md:-translate-x-full'
+        }`}
+      >
         <div className="border-b border-border/50 p-3">
           <div className="mb-3 flex items-center justify-between gap-2">
             <span className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
               <Sparkles className="h-4 w-4 text-primary" />
               Lesson chats
             </span>
-            {onClose && (
-              <button
-                type="button"
-                onClick={onClose}
-                className="rounded-lg p-1.5 text-muted-foreground hover:bg-muted hover:text-foreground"
-                aria-label="Close chat"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            )}
           </div>
           <button
             type="button"
@@ -363,28 +372,56 @@ const ChatExperience = ({
       </aside>
 
       <main className="flex min-w-0 flex-1 flex-col bg-background">
-        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border/50 px-4 py-3">
-          <div className="min-w-0">
-            <h2 className="truncate font-display text-base font-semibold text-foreground">
-              {activeLesson?.title ?? 'Select a lesson'}
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              {selectedLessonId
-                ? 'Chat is grounded in this lesson\'s content'
-                : 'Choose a lesson from the sidebar to start'}
-            </p>
+        <header className="flex shrink-0 items-center justify-between gap-3 border-b border-border/50 px-3 py-3 sm:px-4">
+          <div className="flex min-w-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setMobileSidebarOpen(true)}
+              className="flex shrink-0 items-center gap-1.5 rounded-lg border border-border/60 px-2.5 py-1.5 text-xs font-medium text-foreground transition hover:bg-muted md:hidden"
+              aria-label="Open lesson list"
+            >
+              <List className="h-4 w-4" />
+              Lessons
+            </button>
+            <div className="min-w-0">
+              <h2 className="truncate font-display text-sm font-semibold text-foreground sm:text-base">
+                {activeLesson?.title ?? 'Select a lesson'}
+              </h2>
+              <p className="hidden text-xs text-muted-foreground sm:block">
+                {selectedLessonId
+                  ? 'Chat is grounded in this lesson\'s content'
+                  : 'Choose a lesson from the sidebar to start'}
+              </p>
+            </div>
           </div>
+          {onClose && !fullPage && (
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border/60 text-muted-foreground transition hover:bg-muted hover:text-foreground"
+              aria-label="Close chat"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
         </header>
 
         <div className="flex-1 overflow-y-auto">
-          <div className="mx-auto flex min-h-full max-w-3xl flex-col px-4 py-6">
+          <div className="mx-auto flex min-h-full max-w-3xl flex-col px-3 py-4 sm:px-4 sm:py-6">
             {!selectedLessonId ? (
-              <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
+              <div className="flex flex-1 flex-col items-center justify-center py-8 text-center sm:py-12">
                 <BookOpen className="mb-4 h-12 w-12 text-primary/50" />
                 <h3 className="font-display text-lg font-semibold">Pick a lesson</h3>
                 <p className="mt-2 max-w-sm text-sm text-muted-foreground">
                   AI tutoring is available within the context of a specific lesson.
                 </p>
+                <button
+                  type="button"
+                  onClick={() => setMobileSidebarOpen(true)}
+                  className="mt-4 rounded-xl border border-primary/30 bg-primary/10 px-4 py-2 text-sm font-medium text-primary md:hidden"
+                >
+                  Browse lessons
+                </button>
               </div>
             ) : loading ? (
               <div className="flex flex-1 items-center justify-center py-20">
@@ -401,7 +438,7 @@ const ChatExperience = ({
                 <p className="mt-2 max-w-md text-sm text-muted-foreground">
                   Your conversation stays linked to this lesson. Pick a prompt or ask your own question.
                 </p>
-                <div className="mt-8 grid w-full max-w-lg gap-2 sm:grid-cols-2">
+                <div className="mt-6 grid w-full max-w-lg gap-2 sm:mt-8 sm:grid-cols-2">
                   {SUGGESTIONS.map((prompt) => (
                     <button
                       key={prompt}
@@ -428,7 +465,7 @@ const ChatExperience = ({
                       </div>
                     )}
                     {m.role === 'USER' ? (
-                      <div className="flex max-w-[85%] items-center gap-2">
+                      <div className="flex max-w-[92%] items-center gap-2 sm:max-w-[85%]">
                         {m.failed && (
                           <button
                             type="button"
@@ -446,7 +483,7 @@ const ChatExperience = ({
                         </div>
                       </div>
                     ) : (
-                      <div className="max-w-[85%] rounded-2xl bg-muted/60 px-4 py-3 text-sm leading-relaxed text-foreground">
+                      <div className="max-w-[92%] rounded-2xl bg-muted/60 px-3 py-2.5 text-sm leading-relaxed text-foreground sm:max-w-[85%] sm:px-4 sm:py-3">
                         <MarkdownContent content={m.content} variant="chat" />
                       </div>
                     )}
@@ -480,8 +517,8 @@ const ChatExperience = ({
           </div>
         </div>
 
-        <div className="shrink-0 border-t border-border/50 bg-background px-4 py-4">
-          <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-border/70 bg-card p-2 shadow-sm focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/15">
+        <div className="shrink-0 border-t border-border/50 bg-background px-3 py-3 sm:px-4 sm:py-4">
+          <div className="mx-auto flex max-w-3xl items-end gap-2 rounded-2xl border border-border/70 bg-card p-1.5 shadow-sm focus-within:border-primary/40 focus-within:ring-2 focus-within:ring-primary/15 sm:p-2">
             <textarea
               ref={inputRef}
               rows={1}
