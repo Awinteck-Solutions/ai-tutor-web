@@ -26,30 +26,30 @@ export const StatCard = ({
   highlight = false,
 }) => (
   <div
-    className={`glass-card relative overflow-hidden p-5 ${highlight ? 'border-primary/30' : ''} ${className}`}
+    className={`glass-card relative min-w-0 overflow-hidden p-3 sm:p-5 ${highlight ? 'border-primary/30' : ''} ${className}`}
   >
     {highlight && <div className="pointer-events-none absolute inset-0 bg-stat-shine" />}
-    <div className="relative flex items-start justify-between gap-3">
+    <div className="relative flex items-center gap-2.5 sm:items-start sm:gap-3">
       {Icon && (
         <div
-          className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${
+          className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-2xl sm:h-11 sm:w-11 ${
             highlight
               ? 'bg-primary text-primary-foreground shadow-glow-sm'
               : 'border border-border/60 bg-muted text-primary'
           }`}
         >
-          <Icon className="h-5 w-5" />
+          <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
         </div>
       )}
-      <div className="min-w-0 flex-1 text-right sm:text-left">
-        <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[10px] font-bold uppercase tracking-[0.12em] text-muted-foreground">
           {label}
         </p>
-        <p className="mt-1 truncate font-display text-2xl font-bold tabular-nums text-foreground">
+        <p className="mt-0.5 truncate font-display text-lg font-bold tabular-nums text-foreground sm:mt-1 sm:text-2xl">
           {value ?? '—'}
         </p>
         {sublabel && (
-          <p className="mt-1 text-xs text-muted-foreground">{sublabel}</p>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground sm:mt-1">{sublabel}</p>
         )}
       </div>
     </div>

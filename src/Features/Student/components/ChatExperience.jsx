@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Modal } from '@mantine/core';
 import {
   BookOpen,
   List,
@@ -16,10 +17,18 @@ import { notifications } from '@mantine/notifications';
 import { useAuth } from '../../../shared/context/AuthContext';
 import MarkdownContent from '../../../shared/components/MarkdownContent';
 import { getErrorMessage } from '../../../shared/utils/formatters';
+import { isValidChatPractice } from '../../../shared/utils/chatPractice.utils';
+import ChatThinkingIndicator, { ChatAssistantAvatar } from './ChatThinkingIndicator';
+import { ChatLessonsSidebarSkeleton, ChatSessionSkeleton } from '../../../shared/components/LoadingPrimitives';
+import ChatPracticeActions from './ChatPracticeActions';
+import FlashcardStudy from './FlashcardStudy';
+import QuizStudy from './QuizStudy';
+import QuizCloseModal from './QuizCloseModal';
 import {
   getChatSession,
   getLessons,
   listChatSessions,
+  saveQuizDraft,
   sendChatMessage,
 } from '../services/student.services';
 
@@ -71,12 +80,22 @@ const ChatExperience = ({
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [search, setSearch] = useState('');
+  const [lessonsLoading, setLessonsLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [sending, setSending] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const [activeQuiz, setActiveQuiz] = useState(null);
+  const [quizRetake, setQuizRetake] = useState(false);
+  const [activeFlashcards, setActiveFlashcards] = useState(null);
+  const [flashcardPracticeOnly, setFlashcardPracticeOnly] = useState(false);
+  const [quizExitOpen, setQuizExitOpen] = useState(false);
+  const [quizExitSaving, setQuizExitSaving] = useState(false);
   const bottomRef = useRef(null);
   const inputRef = useRef(null);
   const abortControllerRef = useRef(null);
+  const quizSaveRef = useRef(null);
+  const loadSessionRequestRef = useRef(0);
+  const lessonsLoadRequestRef = useRef(0);
 
   const activeLesson = useMemo(
     () => lessons.find((l) => l.id === selectedLessonId),
@@ -98,37 +117,60 @@ const ChatExperience = ({
 
   const loadSession = useCallback(async (id) => {
     if (!id) return;
+    const requestId = ++loadSessionRequestRef.current;
     setLoading(true);
     try {
       const data = await getChatSession(id);
+      if (requestId !== loadSessionRequestRef.current) return;
       setMessages(withRetryState(data?.messages ?? []));
       setSessionId(id);
       if (data?.lessonId) setSelectedLessonId(data.lessonId);
     } catch (err) {
+      if (requestId !== loadSessionRequestRef.current) return;
       notifications.show({ title: 'Chat', message: getErrorMessage(err), color: 'red' });
     } finally {
-      setLoading(false);
+      if (requestId === loadSessionRequestRef.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
-    if (!organizationId) return;
-    refreshData().then(({ lessons: lessonList, sessions: sessionList }) => {
-      const initialLessonId = context.lessonId ?? null;
-      if (!initialLessonId) {
-        setSelectedLessonId(null);
-        setSessionId(null);
-        setMessages([]);
-        setMobileSidebarOpen(true);
-        return;
-      }
-      setSelectedLessonId(initialLessonId);
-      const latestSession = sessionList
-        .filter((s) => s.lessonId === initialLessonId)
-        .sort((a, b) => new Date(b.updatedAt ?? 0) - new Date(a.updatedAt ?? 0))[0];
-      if (latestSession?.id) loadSession(latestSession.id);
-    });
-  }, [organizationId, context.lessonId, fullPage, refreshData, loadSession]);
+    if (!organizationId) {
+      setLessonsLoading(false);
+      return undefined;
+    }
+
+    const requestId = ++lessonsLoadRequestRef.current;
+    const initialLessonId = context.lessonId ?? null;
+
+    setLessonsLoading(true);
+    refreshData()
+      .then(({ sessions: sessionList }) => {
+        if (requestId !== lessonsLoadRequestRef.current) return;
+
+        if (!initialLessonId) {
+          setSelectedLessonId(null);
+          setSessionId(null);
+          setMessages([]);
+          setMobileSidebarOpen(true);
+          return;
+        }
+
+        setSelectedLessonId(initialLessonId);
+        const latestSession = sessionList
+          .filter((s) => s.lessonId === initialLessonId)
+          .sort((a, b) => new Date(b.updatedAt ?? 0) - new Date(a.updatedAt ?? 0))[0];
+        if (latestSession?.id) loadSession(latestSession.id);
+      })
+      .finally(() => {
+        if (requestId === lessonsLoadRequestRef.current) {
+          setLessonsLoading(false);
+        }
+      });
+
+    return undefined;
+  }, [organizationId, refreshData, loadSession, context.lessonId]);
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -178,6 +220,12 @@ const ChatExperience = ({
   }, [lessons, latestSessionByLesson, search]);
 
   const selectLesson = (lessonId) => {
+    if (lessonId === selectedLessonId && !loading) {
+      setMobileSidebarOpen(false);
+      return;
+    }
+
+    loadSessionRequestRef.current += 1;
     setSelectedLessonId(lessonId);
     const latest = latestSessionByLesson.get(lessonId);
     if (latest?.id) {
@@ -186,6 +234,7 @@ const ChatExperience = ({
       setSessionId(null);
       setMessages([]);
       setInput('');
+      setLoading(false);
     }
     setMobileSidebarOpen(false);
     if (fullPage) {
@@ -203,6 +252,70 @@ const ChatExperience = ({
 
   const handleStop = () => {
     abortControllerRef.current?.abort();
+  };
+
+  const closeQuiz = () => {
+    setActiveQuiz(null);
+    setQuizRetake(false);
+    setQuizExitOpen(false);
+    quizSaveRef.current = null;
+  };
+
+  const handleQuizExitSave = async () => {
+    if (quizSaveRef.current) {
+      setQuizExitSaving(true);
+      try {
+        await quizSaveRef.current();
+        closeQuiz();
+      } catch (err) {
+        notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
+      } finally {
+        setQuizExitSaving(false);
+      }
+      return;
+    }
+    if (activeQuiz?.quizId && activeQuiz?.draft) {
+      setQuizExitSaving(true);
+      try {
+        await saveQuizDraft(activeQuiz.quizId, {
+          answers: activeQuiz.draft.answers,
+          currentStep: activeQuiz.draft.currentStep,
+        });
+        closeQuiz();
+      } finally {
+        setQuizExitSaving(false);
+      }
+      return;
+    }
+    closeQuiz();
+  };
+
+  const openPracticeQuiz = (practice) => {
+    const activeSessionId = sessionId || practice?.chatSessionId;
+    if (!isValidChatPractice(practice, activeSessionId)) return;
+    setQuizRetake(false);
+    setActiveQuiz({
+      quizId: `chat-practice-${practice.chatSessionId}`,
+      lessonId: selectedLessonId,
+      lessonTitle: activeLesson?.title ?? 'Lesson',
+      title: practice.title || 'Quiz from chat',
+      questions: practice.questions ?? [],
+      practiceOnly: true,
+    });
+  };
+
+  const openPracticeFlashcards = (practice) => {
+    const activeSessionId = sessionId || practice?.chatSessionId;
+    if (!isValidChatPractice(practice, activeSessionId)) return;
+    setFlashcardPracticeOnly(true);
+    setActiveFlashcards(
+      (practice.cards ?? []).map((card) => ({
+        flashcardId: card.id,
+        question: card.question,
+        answer: card.answer,
+        lessonId: selectedLessonId,
+      })),
+    );
   };
 
   const handleSend = async (textOverride, { retryMessageId } = {}) => {
@@ -237,7 +350,7 @@ const ChatExperience = ({
 
       const res = await sendChatMessage(organizationId, text, chatOpts);
       const sid = res?.sessionId ?? sessionId;
-      if (sid && sid !== sessionId) setSessionId(sid);
+      if (sid) setSessionId(sid);
 
       setMessages((prev) => [
         ...prev,
@@ -245,13 +358,38 @@ const ChatExperience = ({
           id: res?.id ?? `a-${Date.now()}`,
           role: 'ASSISTANT',
           content: res?.content ?? res?.answer ?? 'No response',
+          practice: res?.practice ?? undefined,
         },
       ]);
 
-      const { sessions: updatedSessions } = await refreshData();
+      if (res?.practiceError) {
+        notifications.show({
+          title: 'Practice',
+          message: res.practiceError,
+          color: 'orange',
+        });
+      }
+
       if (sid) {
-        const session = updatedSessions.find((s) => s.id === sid);
-        if (session?.lessonId) setSelectedLessonId(session.lessonId);
+        setSessions((prev) => {
+          const exists = prev.some((s) => s.id === sid);
+          if (exists) {
+            return prev.map((s) =>
+              s.id === sid
+                ? { ...s, updatedAt: new Date().toISOString(), preview: text.slice(0, 80) }
+                : s,
+            );
+          }
+          return [
+            {
+              id: sid,
+              lessonId: selectedLessonId,
+              updatedAt: new Date().toISOString(),
+              preview: text.slice(0, 80),
+            },
+            ...prev,
+          ];
+        });
       }
     } catch (err) {
       if (isRequestCanceled(err)) {
@@ -324,7 +462,9 @@ const ChatExperience = ({
         </div>
 
         <div className="flex-1 overflow-y-auto p-2">
-          {lessonEntries.length === 0 ? (
+          {lessonsLoading ? (
+            <ChatLessonsSidebarSkeleton />
+          ) : lessonEntries.length === 0 ? (
             <p className="px-2 py-4 text-center text-xs text-muted-foreground">
               {search ? 'No lessons match your search' : 'Create a lesson to start chatting'}
             </p>
@@ -423,10 +563,8 @@ const ChatExperience = ({
                   Browse lessons
                 </button>
               </div>
-            ) : loading ? (
-              <div className="flex flex-1 items-center justify-center py-20">
-                <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-              </div>
+            ) : selectedLessonId && (lessonsLoading || loading) ? (
+              <ChatSessionSkeleton />
             ) : messages.length === 0 ? (
               <div className="flex flex-1 flex-col items-center justify-center py-12 text-center">
                 <div className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary/15">
@@ -459,11 +597,7 @@ const ChatExperience = ({
                     key={m.id}
                     className={`flex gap-3 ${m.role === 'USER' ? 'justify-end' : 'justify-start'}`}
                   >
-                    {m.role !== 'USER' && (
-                      <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15 text-primary">
-                        <Sparkles className="h-4 w-4" />
-                      </div>
-                    )}
+                    {m.role !== 'USER' && <ChatAssistantAvatar />}
                     {m.role === 'USER' ? (
                       <div className="flex max-w-[92%] items-center gap-2 sm:max-w-[85%]">
                         {m.failed && (
@@ -478,39 +612,27 @@ const ChatExperience = ({
                             <RotateCw className="h-4 w-4" />
                           </button>
                         )}
-                        <div className="rounded-2xl bg-primary px-4 py-3 text-sm leading-relaxed text-primary-foreground">
+                        <div className="chat-user-bubble rounded-2xl px-4 py-3 text-sm leading-relaxed">
                           <p className="whitespace-pre-wrap">{m.content}</p>
                         </div>
                       </div>
                     ) : (
                       <div className="max-w-[92%] rounded-2xl bg-muted/60 px-3 py-2.5 text-sm leading-relaxed text-foreground sm:max-w-[85%] sm:px-4 sm:py-3">
                         <MarkdownContent content={m.content} variant="chat" />
+                        {isValidChatPractice(m.practice, sessionId || m.practice?.chatSessionId) && (
+                          <ChatPracticeActions
+                            practice={m.practice}
+                            sessionId={sessionId || m.practice?.chatSessionId}
+                            onTryQuiz={openPracticeQuiz}
+                            onTryFlashcards={openPracticeFlashcards}
+                            disabled={sending}
+                          />
+                        )}
                       </div>
                     )}
                   </li>
                 ))}
-                {sending && (
-                  <li className="flex gap-3">
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-primary/15">
-                      <Sparkles className="h-4 w-4 animate-pulse text-primary" />
-                    </div>
-                    <div className="flex items-center gap-3 rounded-2xl bg-muted/60 px-4 py-3 text-sm text-muted-foreground">
-                      <span className="inline-flex gap-1">
-                        <span className="animate-bounce">·</span>
-                        <span className="animate-bounce [animation-delay:120ms]">·</span>
-                        <span className="animate-bounce [animation-delay:240ms]">·</span>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={handleStop}
-                        className="inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-card px-2.5 py-1 text-xs font-medium text-foreground transition hover:border-destructive/40 hover:text-destructive"
-                      >
-                        <Square className="h-3 w-3 fill-current" />
-                        Stop
-                      </button>
-                    </div>
-                  </li>
-                )}
+                {sending && <ChatThinkingIndicator onStop={handleStop} />}
                 <li ref={bottomRef} aria-hidden />
               </ul>
             )}
@@ -542,9 +664,9 @@ const ChatExperience = ({
               type="button"
               onClick={sending ? handleStop : () => handleSend()}
               disabled={!sending && (!input.trim() || !selectedLessonId)}
-              className={`mb-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition hover:brightness-105 disabled:opacity-40 ${
+              className={`chat-send-btn mb-1 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl transition hover:brightness-105 disabled:opacity-40 ${
                 sending
-                  ? 'bg-destructive text-destructive-foreground'
+                  ? 'border border-border/70 bg-muted text-foreground hover:bg-muted/80'
                   : 'bg-primary text-primary-foreground'
               }`}
               aria-label={sending ? 'Stop response' : 'Send message'}
@@ -558,6 +680,72 @@ const ChatExperience = ({
           </div>
         </div>
       </main>
+
+      <Modal
+        opened={Boolean(activeQuiz)}
+        onClose={() => (activeQuiz?.practiceOnly || quizRetake ? closeQuiz() : setQuizExitOpen(true))}
+        title={activeQuiz?.title || 'Quiz'}
+        size="lg"
+        centered
+        closeOnClickOutside={false}
+        classNames={{ content: 'glass-card !bg-card' }}
+      >
+        {activeQuiz && (
+          <QuizStudy
+            quiz={{
+              quizId: activeQuiz.quizId,
+              lessonId: activeQuiz.lessonId,
+              lessonTitle: activeQuiz.lessonTitle,
+              title: activeQuiz.title,
+              questions: activeQuiz.questions ?? [],
+            }}
+            draft={quizRetake || activeQuiz.practiceOnly ? null : activeQuiz.draft}
+            retakeMode={quizRetake}
+            practiceOnly={Boolean(activeQuiz.practiceOnly)}
+            onRegisterSave={(fn) => { quizSaveRef.current = fn; }}
+            onCloseWithUnsaved={() => setQuizExitOpen(true)}
+            onCloseRequest={closeQuiz}
+            onComplete={() => closeQuiz()}
+            onSaved={() => {}}
+          />
+        )}
+      </Modal>
+
+      <QuizCloseModal
+        opened={quizExitOpen}
+        onClose={() => setQuizExitOpen(false)}
+        saving={quizExitSaving}
+        onSaveAndExit={handleQuizExitSave}
+        onLeaveWithoutSaving={closeQuiz}
+      />
+
+      <Modal
+        opened={Boolean(activeFlashcards?.length)}
+        onClose={() => {
+          setActiveFlashcards(null);
+          setFlashcardPracticeOnly(false);
+        }}
+        title="Flashcard review"
+        size="lg"
+        centered
+        classNames={{ content: 'glass-card !bg-card' }}
+      >
+        {activeFlashcards?.length > 0 && (
+          <FlashcardStudy
+            cards={activeFlashcards.map((f) => ({
+              flashcardId: f.flashcardId,
+              question: f.question,
+              answer: f.answer,
+              lessonId: f.lessonId,
+            }))}
+            practiceOnly={flashcardPracticeOnly}
+            onComplete={() => {
+              setActiveFlashcards(null);
+              setFlashcardPracticeOnly(false);
+            }}
+          />
+        )}
+      </Modal>
     </div>
   );
 };

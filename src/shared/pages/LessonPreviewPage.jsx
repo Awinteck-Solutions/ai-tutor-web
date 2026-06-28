@@ -3,13 +3,18 @@ import { Link, useLocation, useParams } from 'react-router-dom';
 import { Anchor, Breadcrumbs, Tabs } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import {
-  ArrowLeft, BookOpen, Brain, CheckCircle2, ChevronRight, FileStack, HelpCircle, Sparkles, Target,
+  ArrowLeft, BookOpen, Brain, CheckCircle2, ChevronRight, FileStack, HelpCircle, Map, Sparkles, Target,
 } from 'lucide-react';
 import MarkdownContent from '../components/MarkdownContent';
+import LessonContentViewer from '../components/LessonContentViewer';
+import ConceptMapView from '../components/ConceptMapView';
+import LearningDNAInsights from '../components/LearningDNAInsights';
+import { usePreviewOrganizationId } from '../hooks/usePreviewOrganizationId';
 import { useAuth } from '../context/AuthContext';
+import { platformContentPath } from '../../Features/Platform/platform.paths';
 import { PageHeader } from '../components/PageShell';
 import { EmptyOrgHint } from '../components/PageLoader';
-import { PageHeaderSkeleton } from '../components/TableSkeleton';
+import { ContentFadeIn, LessonPreviewSkeleton } from '../components/LoadingPrimitives';
 import StatusBadge from '../components/StatusBadge';
 import { AdesiaBadge } from '../components/AdesiaBadge';
 import { FlashcardStateCell, QuizStateCell } from '../components/LessonAssetState';
@@ -24,6 +29,11 @@ import {
   getLessonDetail,
   getLessonSources,
 } from '../../Features/Student/services/student.services';
+import {
+  getLearningDNA,
+  getLessonContentSummary,
+  resolveConceptMap,
+} from '../services/lessonExperience.services';
 import {
   generateLessonFlashcards,
   generateLessonQuiz,
@@ -46,71 +56,129 @@ const mapSourcesToMaterials = (sources) => {
 const LessonPreviewPage = () => {
   const { lessonId } = useParams();
   const location = useLocation();
-  const { organizationId } = useAuth();
+  const organizationId = usePreviewOrganizationId();
+  const { user, isPlatformAdmin } = useAuth();
   const [lesson, setLesson] = useState(null);
   const [flashcards, setFlashcards] = useState([]);
   const [quizQuestions, setQuizQuestions] = useState([]);
   const [progress, setProgress] = useState(null);
+  const [lessonContent, setLessonContent] = useState(null);
+  const [lessonState, setLessonState] = useState(null);
+  const [conceptMap, setConceptMap] = useState(null);
+  const [learningDNA, setLearningDNA] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [generating, setGenerating] = useState(null);
   const [completing, setCompleting] = useState(false);
 
   const isStudent = location.pathname.startsWith('/student');
   const isTeacher = location.pathname.startsWith('/teacher');
+  const isPlatform = location.pathname.startsWith('/platform');
+  /** Super admins get the full living-lesson experience (pages, state, DNA, practice). */
+  const fullLessonExperience = isStudent || isPlatformAdmin;
 
-  const lessonsPath = isStudent
-    ? '/student/lessons'
+  const lessonsPath = isPlatform
+    ? platformContentPath({ organizationId, type: 'lessons' })
+    : isStudent
+      ? '/student/lessons'
+      : isTeacher
+        ? '/teacher/lessons'
+        : '/admin/lessons';
+
+  const materialsPath = isPlatform
+    ? platformContentPath({ organizationId, type: 'materials' })
     : isTeacher
-      ? '/teacher/lessons'
-      : '/admin/lessons';
-
-  const materialsPath = isTeacher
-    ? '/teacher/materials'
-    : '/admin/materials';
+      ? '/teacher/materials'
+      : '/admin/materials';
 
   const resolveMaterials = useCallback(async (lessonData) => {
     if (lessonData?.materials?.length) return lessonData.materials;
     try {
-      const sources = isStudent
+      const sources = fullLessonExperience && isStudent
         ? await getLessonSources(organizationId, lessonId)
         : await getOrgLessonSources(lessonId, organizationId);
       return mapSourcesToMaterials(sources);
     } catch {
       return [];
     }
-  }, [isStudent, organizationId, lessonId]);
+  }, [fullLessonExperience, isStudent, organizationId, lessonId]);
 
   const load = useCallback(async () => {
-    if (!organizationId || !lessonId) return;
+    if (!organizationId || !lessonId) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
+    setLoadError(null);
     try {
-      if (isStudent) {
+      if (fullLessonExperience) {
         const detail = await getLessonDetail(organizationId, lessonId);
         const lessonData = detail?.lesson ?? null;
         const materials = await resolveMaterials(lessonData);
         setLesson(lessonData ? { ...lessonData, materials } : null);
         setProgress(detail?.progress ?? null);
-        setFlashcards([]);
-        setQuizQuestions([]);
+        setLessonContent(detail?.lessonContent ?? null);
+        setLessonState(detail?.lessonState ?? null);
+
+        const [mapData, dnaData] = await Promise.all([
+          resolveConceptMap({
+            lessonId,
+            organizationId,
+            userId: user?.id,
+            lesson: lessonData,
+            lessonContent: detail?.lessonContent,
+            lessonState: detail?.lessonState,
+            initialMap: detail?.conceptMap,
+          }),
+          getLearningDNA(organizationId).catch(() => null),
+        ]);
+        setConceptMap(mapData);
+        setLearningDNA(dnaData);
+
+        if (!isStudent) {
+          const [cards, questions] = await Promise.all([
+            getLessonFlashcards(lessonId, organizationId).catch(() => []),
+            getLessonQuizQuestions(lessonId, organizationId).catch(() => []),
+          ]);
+          setFlashcards(Array.isArray(cards) ? cards : cards?.items ?? []);
+          setQuizQuestions(Array.isArray(questions) ? questions : questions?.items ?? []);
+        } else {
+          setFlashcards([]);
+          setQuizQuestions([]);
+        }
       } else {
         const lessonData = await getLesson(lessonId, organizationId);
         const materials = await resolveMaterials(lessonData);
         setLesson({ ...lessonData, materials });
         setProgress(null);
+        setLessonState(null);
+        setLearningDNA(null);
 
-        const [cards, questions] = await Promise.all([
+        const [cards, questions, contentSummary] = await Promise.all([
           getLessonFlashcards(lessonId, organizationId).catch(() => []),
           getLessonQuizQuestions(lessonId, organizationId).catch(() => []),
+          getLessonContentSummary(lessonId, organizationId).catch(() => null),
         ]);
+        const mapData = await resolveConceptMap({
+          lessonId,
+          organizationId,
+          userId: user?.id,
+          lesson: lessonData,
+          lessonContent: contentSummary,
+          lessonState: null,
+        });
         setFlashcards(Array.isArray(cards) ? cards : cards?.items ?? []);
         setQuizQuestions(Array.isArray(questions) ? questions : questions?.items ?? []);
+        setLessonContent(contentSummary);
+        setConceptMap(mapData);
       }
     } catch (err) {
+      setLoadError(getErrorMessage(err));
       notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
     } finally {
       setLoading(false);
     }
-  }, [organizationId, lessonId, isStudent, resolveMaterials]);
+  }, [organizationId, lessonId, fullLessonExperience, isStudent, resolveMaterials, user?.id]);
 
   useEffect(() => {
     load();
@@ -184,26 +252,51 @@ const LessonPreviewPage = () => {
       )}
 
       {loading ? (
-        <PageHeaderSkeleton />
+        <LessonPreviewSkeleton />
+      ) : loadError && !lesson ? (
+        <div className="glass-card flex flex-col items-center justify-center gap-4 px-6 py-16 text-center">
+          <p className="text-sm text-muted-foreground">{loadError}</p>
+          <GradientButton type="button" onClick={load} className="!px-4 !py-2">
+            Try again
+          </GradientButton>
+        </div>
+      ) : !lesson ? (
+        <div className="glass-card px-6 py-16 text-center text-sm text-muted-foreground">
+          Lesson not found or you do not have access to view it.
+        </div>
       ) : (
+        <ContentFadeIn>
         <PageHeader
           title={lesson?.title || 'Lesson'}
-          gradientWord={isStudent ? undefined : 'preview'}
+          gradientWord={fullLessonExperience && !isPlatformAdmin ? undefined : 'preview'}
           description={
-            isStudent
+            fullLessonExperience
               ? lesson?.summary || 'Read the lesson, review source materials, and practice.'
               : 'Review lesson content, source materials, flashcards, and quiz questions.'
           }
-          action={isStudent && !progressComplete && (
+          action={fullLessonExperience && !progressComplete && (
             <GradientButton type="button" onClick={handleComplete} disabled={completing} className="!px-3 !py-2">
               <CheckCircle2 className="h-4 w-4" />
               {completing ? 'Saving…' : 'Mark complete'}
             </GradientButton>
           )}
         />
+
+      {fullLessonExperience && lesson && learningDNA && (
+        <div className="mb-6">
+          <LearningDNAInsights learningDNA={learningDNA} />
+        </div>
       )}
 
-      {isStudent && !loading && lesson && (
+      {isPlatformAdmin && lesson && (
+        <p className="mb-4 rounded-xl border border-primary/25 bg-primary/5 px-4 py-3 text-sm text-foreground">
+          <span className="font-semibold text-primary">Full lesson experience</span>
+          {' — '}
+          Paginated content, lesson state, concept map, practice, and Learning DNA — same as students see.
+        </p>
+      )}
+
+      {fullLessonExperience && lesson && (
         <div className="mb-4 flex flex-wrap gap-2">
           <AdesiaBadge status={progressComplete ? 'active' : 'draft'}>
             {progressComplete
@@ -224,7 +317,7 @@ const LessonPreviewPage = () => {
         </div>
       )}
 
-      {isStudent && !loading && lesson?.isPersonal && (
+      {isStudent && lesson?.isPersonal && (
         <div className="mb-6 space-y-4">
           <ContinueLearningCard
             organizationId={organizationId}
@@ -242,7 +335,7 @@ const LessonPreviewPage = () => {
         </div>
       )}
 
-      {!isStudent && !loading && lesson?.studentLevel && (
+      {!isStudent && lesson?.studentLevel && (
         <div className="mb-4 flex flex-wrap gap-2">
           <AdesiaBadge status="draft">
             {lesson.studentLevel.charAt(0).toUpperCase() + lesson.studentLevel.slice(1)} level
@@ -250,7 +343,7 @@ const LessonPreviewPage = () => {
         </div>
       )}
 
-      {!loading && lesson && (
+      {lesson && (
         <div className="space-y-6">
           <div className="glass-card grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-5">
             <div>
@@ -288,9 +381,12 @@ const LessonPreviewPage = () => {
               <Tabs.Tab value="materials" leftSection={<FileStack className="h-3.5 w-3.5" />}>
                 Materials ({materialCount})
               </Tabs.Tab>
-              {isStudent && (
+              {fullLessonExperience && (
                 <>
                   <Tabs.Tab value="notes">Notes</Tabs.Tab>
+                  <Tabs.Tab value="concept-map" leftSection={<Map className="h-3.5 w-3.5" />}>
+                    Concept map
+                  </Tabs.Tab>
                   <Tabs.Tab value="practice" leftSection={<Target className="h-3.5 w-3.5" />}>
                     Practice
                   </Tabs.Tab>
@@ -309,40 +405,74 @@ const LessonPreviewPage = () => {
             </Tabs.List>
 
             <Tabs.Panel value="content">
-              <div className="glass-card space-y-5 p-5">
+              <div className="space-y-5">
                 {lesson.summary && (
-                  <div>
+                  <div className="glass-card p-5">
                     <h3 className="mb-2 text-sm font-semibold">Summary</h3>
                     <MarkdownContent content={lesson.summary} />
                   </div>
                 )}
                 {lesson.objectives?.length > 0 && (
-                  <div>
+                  <div className="glass-card p-5">
                     <h3 className="mb-2 text-sm font-semibold">Objectives</h3>
                     <ul className="list-disc space-y-1 pl-5 text-sm text-muted-foreground">
                       {lesson.objectives.map((item) => <li key={item}>{item}</li>)}
                     </ul>
                   </div>
                 )}
-                {lesson.concepts?.length > 0 && (
-                  <div>
-                    <h3 className="mb-2 text-sm font-semibold">Key concepts</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {lesson.concepts.map((c) => (
-                        <AdesiaBadge key={c} status="draft">{c}</AdesiaBadge>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                {lesson.content && (
-                  <div>
+
+                {lessonContent?.pages?.length > 0 ? (
+                  <LessonContentViewer
+                    lessonId={lessonId}
+                    organizationId={organizationId}
+                    contentSummary={lessonContent}
+                    lessonState={lessonState}
+                    readOnly={!fullLessonExperience}
+                    onStateChange={(nextState) => {
+                      setLessonState(nextState);
+                      setProgress((prev) => ({
+                        ...prev,
+                        progressPercent: nextState.progress,
+                        currentPageId: nextState.currentPageId,
+                        completedPages: nextState.completedPages,
+                      }));
+                      if (user?.id) {
+                        resolveConceptMap({
+                          lessonId,
+                          organizationId,
+                          userId: user.id,
+                          lesson,
+                          lessonContent,
+                          lessonState: nextState,
+                        })
+                          .then(setConceptMap)
+                          .catch(() => {});
+                      }
+                    }}
+                  />
+                ) : lesson.content ? (
+                  <div className="glass-card p-5">
                     <h3 className="mb-2 text-sm font-semibold">Full content</h3>
                     <MarkdownContent content={lesson.content} />
                   </div>
+                ) : (
+                  !lesson.summary && !isComplete && (
+                    <p className="text-sm text-muted-foreground">
+                      Lesson content will appear once generation completes.
+                    </p>
+                  )
                 )}
-                {!lesson.summary && !lesson.content && !isComplete && (
-                  <p className="text-sm text-muted-foreground">Lesson content will appear once generation completes.</p>
-                )}
+              </div>
+            </Tabs.Panel>
+
+            <Tabs.Panel value="concept-map">
+              <div className="glass-card p-5">
+                <ConceptMapView
+                  conceptMap={conceptMap}
+                  lesson={lesson}
+                  lessonContent={lessonContent}
+                  lessonState={lessonState}
+                />
               </div>
             </Tabs.Panel>
 
@@ -386,6 +516,13 @@ const LessonPreviewPage = () => {
                           >
                             View material
                           </Link>
+                        ) : isPlatform ? (
+                          <Link
+                            to={`${materialsPath}/${m.id}/preview?organizationId=${organizationId}`}
+                            className="btn-outline shrink-0 !px-2 !py-1 text-xs no-underline"
+                          >
+                            View material
+                          </Link>
                         ) : (
                           <Link
                             to={`${materialsPath}/${m.id}/preview`}
@@ -401,7 +538,7 @@ const LessonPreviewPage = () => {
               </div>
             </Tabs.Panel>
 
-            {isStudent && (
+            {fullLessonExperience && (
               <>
                 <Tabs.Panel value="notes">
                   <NotesPanel lessonId={lessonId} />
@@ -528,6 +665,8 @@ const LessonPreviewPage = () => {
             )}
           </Tabs>
         </div>
+      )}
+        </ContentFadeIn>
       )}
     </>
   );

@@ -61,6 +61,15 @@ export const AuthProvider = ({ children }) => {
     return profile ?? result.user;
   }, [fetchProfile]);
 
+  const loginWithGoogle = useCallback(async (credential) => {
+    const { data } = await api.post('/auth/google', { credential });
+    const payload = data?.data ?? data;
+    tokenStorage.setTokens(payload.tokens);
+    setUser(payload.user);
+    const profile = await fetchProfile();
+    return profile ?? payload.user;
+  }, [fetchProfile]);
+
   const logout = useCallback(async () => {
     const refreshToken = tokenStorage.getRefreshToken();
     try {
@@ -96,6 +105,7 @@ export const AuthProvider = ({ children }) => {
       isTeacher: user ? TEACHER_ROLES.includes(user.role) : false,
       isStudent: user ? STUDENT_ROLES.includes(user.role) : false,
       login,
+      loginWithGoogle,
       register,
       logout,
       fetchProfile,
@@ -104,7 +114,7 @@ export const AuthProvider = ({ children }) => {
       teacherRoles: TEACHER_ROLES,
       studentRoles: STUDENT_ROLES,
     }),
-    [user, loading, organizationId, organizationName, isPersonalWorkspace, isSchoolStudent, login, register, logout, fetchProfile, getPortalPath]
+    [user, loading, organizationId, organizationName, isPersonalWorkspace, isSchoolStudent, login, loginWithGoogle, register, logout, fetchProfile, getPortalPath]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

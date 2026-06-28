@@ -11,6 +11,8 @@ import StudentDetailPage from '../pages/studentDetail.pages';
 import AnalyseStudentPage from '../../../shared/pages/AnalyseStudentPage';
 import TeacherSettingsPage from '../pages/settings.pages';
 import TeacherNotificationsPage from '../pages/notifications.pages';
+import MarketplacePage from '../../Marketplace/pages/marketplace.pages';
+import MarketplaceDetailPage from '../../Marketplace/pages/marketplaceDetail.pages';
 
 /** Route elements nested under /teacher — do not wrap in another <Routes>. */
 export const teacherRoutes = (
@@ -27,6 +29,16 @@ export const teacherRoutes = (
     <Route path="students/:id" element={<StudentDetailPage />} />
     <Route path="students/:id/analyse" element={<AnalyseStudentPage basePath="/teacher" />} />
     <Route path="notifications" element={<TeacherNotificationsPage />} />
+    <Route path="marketplace" element={<MarketplacePage portalBase="/teacher" getLessonPath={(id) => `/teacher/lessons/${id}/preview`} />} />
+    <Route
+      path="marketplace/:id"
+      element={
+        <MarketplaceDetailPage
+          portalBase="/teacher"
+          getLessonPath={(lessonId) => `/teacher/lessons/${lessonId}/preview`}
+        />
+      }
+    />
     <Route path="settings" element={<TeacherSettingsPage />} />
   </>
 );

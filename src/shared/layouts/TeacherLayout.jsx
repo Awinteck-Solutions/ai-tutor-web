@@ -4,13 +4,16 @@ import {
   Layers,
   LayoutDashboard,
   Settings,
+  Store,
   Upload,
   Users,
 } from 'lucide-react';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import AppShell from './AppShell';
 
-export const teacherNavGroups = [
+export const buildTeacherNavGroups = (t) => [
   {
     title: 'Overview',
     items: [
@@ -23,6 +26,7 @@ export const teacherNavGroups = [
       { label: 'Subjects & topics', path: '/teacher/subjects', icon: BookOpen },
       { label: 'Materials', path: '/teacher/materials', icon: Upload },
       { label: 'Lessons', path: '/teacher/lessons', icon: Layers },
+      { label: t('teacher.marketplace'), path: '/teacher/marketplace', icon: Store },
       { label: 'Students', path: '/teacher/students', icon: Users },
     ],
   },
@@ -35,6 +39,8 @@ export const teacherNavGroups = [
   },
 ];
 
+export const teacherNavGroups = [];
+
 const OrgBanner = ({ organizationId }) =>
   !organizationId ? (
     <div className="alert-warning">
@@ -43,10 +49,12 @@ const OrgBanner = ({ organizationId }) =>
   ) : null;
 
 const TeacherLayout = () => {
+  const { t } = useTranslation('nav');
   const { organizationId } = useAuth();
+  const navGroups = useMemo(() => buildTeacherNavGroups(t), [t]);
   return (
     <AppShell
-      navGroups={teacherNavGroups}
+      navGroups={navGroups}
       homePath="/teacher/dashboard"
       portalLabel="Teacher"
       banner={<OrgBanner organizationId={organizationId} />}

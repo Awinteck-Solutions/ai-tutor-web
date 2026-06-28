@@ -8,83 +8,128 @@ import {
   MessageSquare,
   Settings,
   Sparkles,
+  Store,
   Target,
   Trophy,
   Flag,
 } from 'lucide-react';
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { useAuth } from '../context/AuthContext';
 import StudentQuickActions from '../../Features/Student/components/StudentQuickActions';
 import SetupWorkspaceBanner from '../../Features/Student/components/SetupWorkspaceBanner';
 import StudentOnboardingWizard, {
   shouldShowStudentOnboarding,
 } from '../../Features/Student/components/StudentOnboardingWizard';
+import StudentLearningProfileSetup from '../../Features/Student/components/StudentLearningProfileSetup';
 import AppShell from './AppShell';
 import { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
-export const studentNavGroups = [
+export const buildStudentNavGroups = (t) => [
   {
     title: 'Home',
     items: [
-      { label: 'Dashboard', path: '/student/dashboard', icon: LayoutDashboard, end: true },
+      { label: t('student.dashboard'), path: '/student/dashboard', icon: LayoutDashboard, end: true },
     ],
   },
   {
     title: 'Study',
     items: [
-      { label: 'Self-learn', path: '/student/self-learn', icon: Sparkles },
-      { label: 'Lessons', path: '/student/lessons', icon: BookOpen },
-      { label: 'Practice', path: '/student/practice', icon: Target },
+      { label: t('student.selfLearn'), path: '/student/self-learn', icon: Sparkles },
+      { label: t('student.lessons'), path: '/student/lessons', icon: BookOpen },
+      { label: t('student.marketplace'), path: '/student/marketplace', icon: Store },
+      { label: t('student.practice'), path: '/student/practice', icon: Target },
     ],
   },
   {
     title: 'Tools',
     items: [
-      { label: 'AI Chat', path: '/student/chat', icon: MessageSquare },
+      { label: t('student.chat'), path: '/student/chat', icon: MessageSquare },
     ],
   },
   {
     title: 'Progress',
     items: [
-      { label: 'Milestones', path: '/student/milestones', icon: Flag },
-      { label: 'Achievements', path: '/student/achievements', icon: Award },
-      { label: 'Leaderboard', path: '/student/leaderboard', icon: Trophy },
+      { label: t('student.analyse'), path: '/student/analyse', icon: Brain },
+      { label: t('student.milestones'), path: '/student/milestones', icon: Flag },
+      { label: t('student.achievements'), path: '/student/achievements', icon: Award },
+      { label: t('student.leaderboard'), path: '/student/leaderboard', icon: Trophy },
     ],
   },
   {
     title: 'Account',
     items: [
-      { label: 'Subscription', path: '/student/subscription', icon: CreditCard },
-      { label: 'Notifications', path: '/student/notifications', icon: Bell },
-      { label: 'Settings', path: '/student/settings', icon: Settings },
+      { label: t('student.subscription'), path: '/student/subscription', icon: CreditCard },
+      { label: t('student.notifications'), path: '/student/notifications', icon: Bell },
+      { label: t('student.settings'), path: '/student/settings', icon: Settings },
     ],
   },
 ];
+
+/** @deprecated use buildStudentNavGroups inside layout */
+export const studentNavGroups = [];
 
 const OrgBanner = ({ organizationId }) =>
   !organizationId ? <SetupWorkspaceBanner /> : null;
 
 const StudentLayout = () => {
-  const { organizationId } = useAuth();
+  const { t } = useTranslation('nav');
+  const { organizationId, user, isStudent, fetchProfile } = useAuth();
+  const navGroups = useMemo(() => buildStudentNavGroups(t), [t]);
   const location = useLocation();
+  const [profileSetupOpen, setProfileSetupOpen] = useState(false);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [pendingOnboarding, setPendingOnboarding] = useState(false);
 
   useEffect(() => {
-    if (!organizationId) return;
-    const fromRegister = location.state?.showOnboarding === true;
-    if (fromRegister || shouldShowStudentOnboarding()) {
+    if (!isStudent || !user) return;
+
+    const wantsTour =
+      location.state?.showOnboarding === true || shouldShowStudentOnboarding();
+
+    if (user.needsLearningProfileSetup) {
+      setProfileSetupOpen(true);
+      if (wantsTour) {
+        setPendingOnboarding(true);
+      }
+      return;
+    }
+
+    setProfileSetupOpen(false);
+    if (organizationId && wantsTour) {
       setOnboardingOpen(true);
     }
-  }, [organizationId, location.state?.showOnboarding]);
+  }, [
+    isStudent,
+    user,
+    user?.needsLearningProfileSetup,
+    organizationId,
+    location.state?.showOnboarding,
+  ]);
+
+  const handleProfileSetupComplete = async () => {
+    await fetchProfile();
+    setProfileSetupOpen(false);
+    if (pendingOnboarding && organizationId) {
+      setOnboardingOpen(true);
+    }
+    setPendingOnboarding(false);
+  };
 
   return (
     <>
       <AppShell
-        navGroups={studentNavGroups}
+        navGroups={navGroups}
         homePath="/student/dashboard"
         banner={<OrgBanner organizationId={organizationId} />}
       />
       <StudentQuickActions />
+      <StudentLearningProfileSetup
+        opened={profileSetupOpen}
+        initialProfile={user?.learningProfile}
+        onComplete={handleProfileSetupComplete}
+      />
       <StudentOnboardingWizard
         opened={onboardingOpen}
         onClose={() => setOnboardingOpen(false)}

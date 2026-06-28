@@ -83,7 +83,7 @@ const quizProgressLabel = (q) => {
   return `${pct}% complete`;
 };
 
-const PracticeIconBox = ({ icon: Icon, tone = 'primary' }) => {
+const PracticeIconBox = ({ icon: Icon, tone = 'primary', className = '' }) => {
   const tones = {
     primary: 'bg-primary/15 text-primary',
     amber: 'bg-amber-500/15 text-amber-600 dark:text-amber-400',
@@ -91,11 +91,14 @@ const PracticeIconBox = ({ icon: Icon, tone = 'primary' }) => {
     blue: 'bg-blue-500/15 text-blue-600 dark:text-blue-400',
   };
   return (
-    <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${tones[tone] ?? tones.primary}`}>
-      <Icon className="h-5 w-5" />
+    <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10 ${tones[tone] ?? tones.primary} ${className}`}>
+      <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
     </div>
   );
 };
+
+const practiceActionBtn = 'btn-outline flex min-h-9 flex-1 items-center justify-center gap-1.5 !px-3 !py-2 text-xs sm:min-h-0 sm:flex-initial sm:!px-2.5 sm:!py-1.5';
+const practicePrimaryBtn = 'btn-gradient flex min-h-10 w-full items-center justify-center gap-1.5 !px-4 !py-2.5 text-xs sm:min-h-0 sm:w-auto sm:!px-3 sm:!py-1.5';
 
 const quizIcon = (status) => {
   if (status === 'completed') return { Icon: CheckCircle, tone: 'emerald' };
@@ -246,33 +249,33 @@ const StudentPracticePage = () => {
         </p>
       )}
 
-      <div className="mb-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        <GlassCard className="flex items-center gap-3 p-4">
+      <div className="mb-6 grid grid-cols-2 gap-2.5 sm:gap-3 lg:grid-cols-4">
+        <GlassCard className="flex min-w-0 items-center gap-2.5 p-3 sm:gap-3 sm:p-4">
           <PracticeIconBox icon={Target} tone="amber" />
-          <div>
-            <p className="text-xs text-muted-foreground">Quizzes pending</p>
-            <p className="font-display text-xl font-bold text-foreground">{summary.quizzesPending ?? 0}</p>
+          <div className="min-w-0">
+            <p className="truncate text-[11px] text-muted-foreground sm:text-xs">Quizzes pending</p>
+            <p className="font-display text-lg font-bold text-foreground sm:text-xl">{summary.quizzesPending ?? 0}</p>
           </div>
         </GlassCard>
-        <GlassCard className="flex items-center gap-3 p-4">
+        <GlassCard className="flex min-w-0 items-center gap-2.5 p-3 sm:gap-3 sm:p-4">
           <PracticeIconBox icon={CheckCircle} tone="emerald" />
-          <div>
-            <p className="text-xs text-muted-foreground">Quizzes done</p>
-            <p className="font-display text-xl font-bold text-foreground">{summary.quizzesCompleted ?? 0}</p>
+          <div className="min-w-0">
+            <p className="truncate text-[11px] text-muted-foreground sm:text-xs">Quizzes done</p>
+            <p className="font-display text-lg font-bold text-foreground sm:text-xl">{summary.quizzesCompleted ?? 0}</p>
           </div>
         </GlassCard>
-        <GlassCard className="flex items-center gap-3 p-4">
+        <GlassCard className="flex min-w-0 items-center gap-2.5 p-3 sm:gap-3 sm:p-4">
           <PracticeIconBox icon={Layers} tone="blue" />
-          <div>
-            <p className="text-xs text-muted-foreground">Cards pending</p>
-            <p className="font-display text-xl font-bold text-foreground">{summary.flashcardsPending ?? 0}</p>
+          <div className="min-w-0">
+            <p className="truncate text-[11px] text-muted-foreground sm:text-xs">Cards pending</p>
+            <p className="font-display text-lg font-bold text-foreground sm:text-xl">{summary.flashcardsPending ?? 0}</p>
           </div>
         </GlassCard>
-        <GlassCard className="flex items-center gap-3 p-4">
+        <GlassCard className="flex min-w-0 items-center gap-2.5 p-3 sm:gap-3 sm:p-4">
           <PracticeIconBox icon={Sparkles} tone="primary" />
-          <div>
-            <p className="text-xs text-muted-foreground">Cards reviewed</p>
-            <p className="font-display text-xl font-bold text-foreground">{summary.flashcardsCompleted ?? 0}</p>
+          <div className="min-w-0">
+            <p className="truncate text-[11px] text-muted-foreground sm:text-xs">Cards reviewed</p>
+            <p className="font-display text-lg font-bold text-foreground sm:text-xl">{summary.flashcardsCompleted ?? 0}</p>
           </div>
         </GlassCard>
       </div>
@@ -302,18 +305,18 @@ const StudentPracticePage = () => {
 
       <Tabs value={tab} onChange={handleTabChange}>
         <Tabs.List className="mb-4 flex-wrap gap-1 rounded-xl border border-border/50 bg-card/50 p-1">
-          <Tabs.Tab value="quizzes" leftSection={<BookOpen className="h-4 w-4" />}>
-            Quizzes ({quizList.filtered.length})
+          <Tabs.Tab value="quizzes" leftSection={<BookOpen className="h-4 w-4 shrink-0" />}>
+            <span className="truncate">Quizzes ({quizList.filtered.length})</span>
           </Tabs.Tab>
-          <Tabs.Tab value="flashcards" leftSection={<Layers className="h-4 w-4" />}>
-            Flashcards ({flashcardList.filtered.length})
+          <Tabs.Tab value="flashcards" leftSection={<Layers className="h-4 w-4 shrink-0" />}>
+            <span className="truncate">Flashcards ({flashcardList.filtered.length})</span>
           </Tabs.Tab>
         </Tabs.List>
 
         <Tabs.Panel value="quizzes">
-          <div className="glass-card overflow-hidden">
-            <div className="flex flex-col gap-4 border-b border-border/50 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
+          <div className="glass-card min-w-0 overflow-hidden">
+            <div className="flex flex-col gap-3 border-b border-border/50 px-4 py-3.5 sm:flex-row sm:items-end sm:justify-between sm:gap-4 sm:px-5 sm:py-4">
+              <div className="min-w-0">
                 <h3 className="font-display text-sm font-semibold text-foreground">Quizzes</h3>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {quizList.totalItems} quiz{quizList.totalItems === 1 ? '' : 'zes'}
@@ -323,42 +326,51 @@ const StudentPracticePage = () => {
                 </p>
               </div>
               <SegmentedControl
+                fullWidth
+                className="sm:!w-auto"
+                size="xs"
                 value={quizList.filterValues.status ?? 'all'}
                 onChange={(v) => quizList.setFilter('status', v ?? 'all')}
                 data={[
                   { label: 'All', value: 'all' },
                   { label: 'Pending', value: 'pending' },
-                  { label: 'Completed', value: 'completed' },
+                  { label: 'Done', value: 'completed' },
                 ]}
               />
             </div>
 
-            <div className="grid gap-4 p-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid min-w-0 gap-3 p-4 sm:grid-cols-2 sm:gap-4 sm:p-5 lg:grid-cols-3">
               {quizList.paginatedItems.length ? quizList.paginatedItems.map((q) => {
               const { Icon: QuizIcon, tone } = quizIcon(q.status);
               return (
-              <GlassCard key={q.quizId} className="flex flex-col p-5">
-                <div className="mb-3 flex items-start justify-between gap-2">
+              <GlassCard key={q.quizId} className="flex min-w-0 flex-col p-4 sm:p-5">
+                <div className="flex items-start gap-3">
                   <PracticeIconBox icon={QuizIcon} tone={tone} />
-                  <AdesiaBadge status={q.status === 'completed' ? 'active' : 'draft'}>
-                    {q.status === 'completed' ? 'Completed' : q.status === 'in_progress' ? 'In progress' : 'Pending'}
-                  </AdesiaBadge>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex flex-wrap items-start justify-between gap-x-2 gap-y-1">
+                      <h3 className="line-clamp-2 min-w-0 flex-1 font-display text-sm font-semibold leading-snug text-foreground">
+                        {q.title || 'Quiz'}
+                      </h3>
+                      <AdesiaBadge status={q.status === 'completed' ? 'active' : 'draft'}>
+                        {q.status === 'completed' ? 'Completed' : q.status === 'in_progress' ? 'In progress' : 'Pending'}
+                      </AdesiaBadge>
+                    </div>
+                    <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                      {q.lessonTitle}
+                      {(q.isPersonal || (isSchoolStudent && organizationName && !q.isPersonal)) && (
+                        <>
+                          {' · '}
+                          <StudentSourceLabel
+                            isPersonal={q.isPersonal}
+                            organizationName={organizationName}
+                            isSchoolStudent={isSchoolStudent}
+                            className="inline"
+                          />
+                        </>
+                      )}
+                    </p>
+                  </div>
                 </div>
-                <h3 className="font-display text-sm font-semibold text-foreground">{q.title || 'Quiz'}</h3>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {q.lessonTitle}
-                  {(q.isPersonal || (isSchoolStudent && organizationName && !q.isPersonal)) && (
-                    <>
-                      {' · '}
-                      <StudentSourceLabel
-                        isPersonal={q.isPersonal}
-                        organizationName={organizationName}
-                        isSchoolStudent={isSchoolStudent}
-                        className="inline"
-                      />
-                    </>
-                  )}
-                </p>
                 <div className="mt-3">
                   <div className="mb-1 flex justify-between text-xs text-muted-foreground">
                     <span>Progress</span>
@@ -375,48 +387,48 @@ const StudentPracticePage = () => {
                     Score: {Math.round(q.score ?? 0)}% · {formatDateTime(q.completedAt)}
                   </p>
                 )}
-                <div className="mt-4 flex flex-wrap gap-2">
+                <div className="mt-4 flex flex-col gap-2">
                   {q.status !== 'completed' ? (
                     <button
                       type="button"
-                      className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs"
+                      className={practicePrimaryBtn}
                       onClick={() => {
                         setQuizRetake(false);
                         setActiveQuiz(q);
                       }}
                     >
-                      <Play className="h-3 w-3" />
+                      <Play className="h-3.5 w-3.5" />
                       {q.status === 'in_progress' ? 'Continue quiz' : 'Take quiz'}
                     </button>
                   ) : (
-                    <>
+                    <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-wrap">
                       <button
                         type="button"
-                        className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs"
+                        className={practicePrimaryBtn}
                         onClick={() => {
                           setQuizRetake(true);
                           setActiveQuiz(q);
                         }}
                       >
-                        <RotateCcw className="h-3 w-3" />
+                        <RotateCcw className="h-3.5 w-3.5" />
                         Retake
                       </button>
                       <button
                         type="button"
-                        className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs"
+                        className={practiceActionBtn}
                         onClick={() => setAnswersQuiz(q)}
                       >
-                        <Eye className="h-3 w-3" />
+                        <Eye className="h-3.5 w-3.5" />
                         View answers
                       </button>
-                    </>
+                    </div>
                   )}
                   <Link
                     to={`/student/lessons/${q.lessonId}`}
-                    className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs no-underline"
+                    className={`${practiceActionBtn} no-underline`}
                   >
-                    <BookOpen className="h-3 w-3" />
-                    Lesson
+                    <BookOpen className="h-3.5 w-3.5" />
+                    Open lesson
                   </Link>
                 </div>
               </GlassCard>
@@ -441,9 +453,9 @@ const StudentPracticePage = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="flashcards">
-          <div className="glass-card overflow-hidden">
-            <div className="flex flex-col gap-4 border-b border-border/50 px-5 py-4 sm:flex-row sm:items-end sm:justify-between">
-              <div>
+          <div className="glass-card min-w-0 overflow-hidden">
+            <div className="flex flex-col gap-3 border-b border-border/50 px-4 py-3.5 sm:flex-row sm:items-end sm:justify-between sm:gap-4 sm:px-5 sm:py-4">
+              <div className="min-w-0">
                 <h3 className="font-display text-sm font-semibold text-foreground">Flashcard lessons</h3>
                 <p className="mt-0.5 text-xs text-muted-foreground">
                   {flashcardList.totalItems} lesson{flashcardList.totalItems === 1 ? '' : 's'}
@@ -453,80 +465,89 @@ const StudentPracticePage = () => {
                 </p>
               </div>
               <SegmentedControl
+                fullWidth
+                className="sm:!w-auto"
+                size="xs"
                 value={flashcardList.filterValues.status ?? 'all'}
                 onChange={(v) => flashcardList.setFilter('status', v ?? 'all')}
                 data={[
                   { label: 'All', value: 'all' },
                   { label: 'In progress', value: 'pending' },
-                  { label: 'Complete', value: 'completed' },
+                  { label: 'Done', value: 'completed' },
                 ]}
               />
             </div>
 
-            <div className="space-y-6 p-5">
+            <div className="space-y-3 p-4 sm:space-y-4 sm:p-5">
               {flashcardList.paginatedItems.length ? flashcardList.paginatedItems.map((group) => {
               const isOpen = isLessonExpanded(group.lessonId);
               return (
-              <GlassCard key={group.lessonId} className="overflow-hidden p-0">
+              <GlassCard key={group.lessonId} className="min-w-0 overflow-hidden p-0">
                 <button
                   type="button"
-                  className="flex w-full items-start justify-between gap-3 p-5 text-left transition hover:bg-muted/20"
+                  className="flex w-full flex-col gap-3 p-4 text-left transition hover:bg-muted/20 sm:p-5"
                   onClick={(e) => {
                     e.preventDefault();
                     toggleLessonExpanded(group.lessonId);
                   }}
                   aria-expanded={isOpen}
                 >
-                  <PracticeIconBox icon={BookOpen} />
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <ChevronDown
-                        className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
-                      />
-                      <h3 className="font-display text-sm font-semibold text-foreground">{group.lessonTitle}</h3>
-                    </div>
-                    <p className="mt-1 flex flex-wrap items-center gap-1 pl-6 text-xs text-muted-foreground">
-                      <GraduationCap className="h-3 w-3 shrink-0" />
-                      {group.subjectName}
-                      <span>·</span>
-                      <StudentSourceLabel
-                        isPersonal={group.isPersonal}
-                        organizationName={organizationName}
-                        isSchoolStudent={isSchoolStudent}
-                      />
-                    </p>
-                    <div className="mt-3 pl-6">
-                      <div className="mb-1 flex justify-between text-xs text-muted-foreground">
-                        <span>Lesson progress</span>
-                        <span>{group.progressPercent}%</span>
+                  <div className="flex w-full items-start gap-3">
+                    <PracticeIconBox icon={BookOpen} />
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex min-w-0 items-start gap-1.5">
+                          <ChevronDown
+                            className={`mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                          />
+                          <h3 className="line-clamp-2 font-display text-sm font-semibold leading-snug text-foreground">
+                            {group.lessonTitle}
+                          </h3>
+                        </div>
+                        <AdesiaBadge status={group.progressPercent >= 100 ? 'active' : 'draft'}>
+                          {group.reviewed}/{group.total}
+                        </AdesiaBadge>
                       </div>
-                      <Progress value={group.progressPercent} size="sm" radius="xl" />
+                      <p className="mt-1.5 flex flex-wrap items-center gap-x-1 gap-y-0.5 text-xs text-muted-foreground">
+                        <GraduationCap className="h-3 w-3 shrink-0" />
+                        <span className="line-clamp-1">{group.subjectName}</span>
+                        <span aria-hidden>·</span>
+                        <StudentSourceLabel
+                          isPersonal={group.isPersonal}
+                          organizationName={organizationName}
+                          isSchoolStudent={isSchoolStudent}
+                        />
+                      </p>
                     </div>
                   </div>
-                  <AdesiaBadge status={group.progressPercent >= 100 ? 'active' : 'draft'}>
-                    {group.reviewed}/{group.total}
-                  </AdesiaBadge>
+                  <div className="w-full sm:pl-[52px]">
+                    <div className="mb-1 flex justify-between text-xs text-muted-foreground">
+                      <span>Lesson progress</span>
+                      <span>{group.progressPercent}%</span>
+                    </div>
+                    <Progress value={group.progressPercent} size="sm" radius="xl" />
+                  </div>
                 </button>
 
                 <Collapse in={isOpen}>
-                  <div className="border-t border-border/40 px-5 pb-5 pt-2">
-                    <div className="mb-4 flex flex-wrap gap-2">
+                  <div className="border-t border-border/40 px-4 pb-4 pt-3 sm:px-5 sm:pb-5 sm:pt-2">
+                    <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                       <button
                         type="button"
-                        className="btn-outline flex items-center gap-1 !px-3 !py-1.5 text-xs"
+                        className={practicePrimaryBtn}
                         onClick={(e) => {
                           e.stopPropagation();
                           setActiveFlashcards(group.flashcards ?? []);
                         }}
                       >
-                        <Sparkles className="h-3 w-3" />
+                        <Sparkles className="h-3.5 w-3.5" />
                         Review deck ({group.total})
                       </button>
                       <Link
                         to={`/student/lessons/${group.lessonId}`}
-                        className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs no-underline"
+                        className={`${practiceActionBtn} no-underline`}
                       >
-                        <BookOpen className="h-3 w-3" />
+                        <BookOpen className="h-3.5 w-3.5" />
                         Open lesson
                       </Link>
                     </div>
@@ -534,31 +555,31 @@ const StudentPracticePage = () => {
                       {(group.flashcards ?? []).map((f) => (
                         <li
                           key={f.flashcardId}
-                          className="flex flex-wrap items-center justify-between gap-2 rounded-lg bg-muted/20 px-3 py-2"
+                          className="flex flex-col gap-2.5 rounded-xl border border-border/40 bg-muted/20 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:rounded-lg sm:border-0 sm:p-2 sm:px-3"
                         >
-                          <div className="flex min-w-0 items-center gap-2">
+                          <div className="flex min-w-0 items-start gap-2.5">
                             {f.status === 'completed' ? (
-                              <CheckCircle2 className="h-4 w-4 shrink-0 text-primary" />
+                              <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
                             ) : (
-                              <Circle className="h-4 w-4 shrink-0 text-muted-foreground" />
+                              <Circle className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground" />
                             )}
-                            <p className="truncate text-sm text-foreground">{f.question}</p>
+                            <p className="line-clamp-3 text-sm leading-snug text-foreground sm:line-clamp-2">{f.question}</p>
                           </div>
-                          <div className="flex shrink-0 gap-2">
+                          <div className="grid grid-cols-2 gap-2 sm:flex sm:shrink-0 sm:gap-2">
                             <button
                               type="button"
-                              className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs"
+                              className={practiceActionBtn}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setActiveFlashcards([f]);
                               }}
                             >
-                              <Sparkles className="h-3 w-3" />
+                              <Sparkles className="h-3.5 w-3.5" />
                               Review
                             </button>
                             <button
                               type="button"
-                              className="btn-outline flex items-center gap-1 !px-2 !py-1 text-xs"
+                              className={practiceActionBtn}
                               onClick={(e) => {
                                 e.stopPropagation();
                                 setAnswersQuiz({
@@ -573,7 +594,7 @@ const StudentPracticePage = () => {
                                 });
                               }}
                             >
-                              <Eye className="h-3 w-3" />
+                              <Eye className="h-3.5 w-3.5" />
                               View Q&A
                             </button>
                           </div>

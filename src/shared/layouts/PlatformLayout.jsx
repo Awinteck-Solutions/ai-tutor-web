@@ -8,6 +8,7 @@ import {
   Users,
   BookOpen,
   Wallet,
+  Store,
 } from 'lucide-react';
 import AppShell from './AppShell';
 
@@ -33,6 +34,7 @@ export const platformNavGroups = [
       { label: 'Invoices', path: '/platform/invoices', icon: CreditCard },
       { label: 'Payments', path: '/platform/payments', icon: Wallet },
       { label: 'Content', path: '/platform/content', icon: BookOpen },
+      { label: 'Marketplace', path: '/platform/marketplace', icon: Store },
       { label: 'Emails', path: '/platform/emails', icon: Mail },
     ],
   },

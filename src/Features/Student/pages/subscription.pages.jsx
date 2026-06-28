@@ -70,14 +70,14 @@ const StudentSubscriptionPage = () => {
         description="Your plan, usage limits, and upgrade options."
       />
 
-      <div className="mb-8 grid gap-6 lg:grid-cols-3">
-        <GlassCard className="relative overflow-hidden p-6 lg:col-span-1">
+      <div className="mb-8 grid min-w-0 gap-4 sm:gap-6 lg:grid-cols-3">
+        <GlassCard className="relative min-w-0 overflow-hidden p-4 sm:p-6 lg:col-span-1">
           <div className="pointer-events-none absolute -right-8 -top-8 h-32 w-32 rounded-full bg-primary/10 blur-2xl" />
-          <div className="relative flex items-start gap-4">
-            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-glow-sm">
-              <CreditCard className="h-6 w-6" />
+          <div className="relative flex items-start gap-3 sm:gap-4">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl bg-primary text-primary-foreground shadow-glow-sm sm:h-12 sm:w-12">
+              <CreditCard className="h-5 w-5 sm:h-6 sm:w-6" />
             </div>
-            <div>
+            <div className="min-w-0">
               <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Current plan</p>
               <p className="mt-1 font-display text-2xl font-bold text-foreground">{currentPlan?.name ?? data?.plan ?? 'Free'}</p>
               <p className="mt-1 text-sm text-muted-foreground">{currentPlan?.priceLabel ?? '$0 / month'}</p>
@@ -92,9 +92,9 @@ const StudentSubscriptionPage = () => {
         </GlassCard>
 
         {data?.applyFreeLimits && limits && (
-          <GlassCard className="p-6 lg:col-span-2">
-            <h3 className="mb-5 font-display text-sm font-semibold text-foreground">Free plan usage</h3>
-            <div className="grid gap-5 sm:grid-cols-2">
+          <GlassCard className="min-w-0 p-4 sm:p-6 lg:col-span-2">
+            <h3 className="mb-4 font-display text-sm font-semibold text-foreground sm:mb-5">Free plan usage</h3>
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 sm:gap-5">
               <UsageMeter
                 label="Storage"
                 used={usage.storageBytes ?? 0}
@@ -131,18 +131,18 @@ const StudentSubscriptionPage = () => {
         )}
       </div>
 
-      <GlassCard className="mb-8 p-6">
+      <GlassCard className="mb-8 p-4 sm:p-6">
         <div className="mb-4 flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-primary" />
           <h3 className="font-display text-sm font-semibold text-foreground">All plans</h3>
         </div>
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 xl:grid-cols-4">
           {packages.map((pkg) => {
             const isCurrent = pkg.id === data?.plan;
             return (
               <div
                 key={pkg.id}
-                className={`relative flex flex-col rounded-2xl border p-5 ${
+                className={`relative flex min-w-0 flex-col rounded-2xl border p-4 sm:p-5 ${
                   isCurrent
                     ? 'border-primary/40 bg-primary/5 shadow-glow-sm'
                     : 'border-border/60 bg-muted/20'

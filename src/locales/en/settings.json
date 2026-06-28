@@ -1,0 +1,63 @@
+{
+  "title": "Settings",
+  "description": "Manage your account, learning preferences, and app experience.",
+  "tabs": {
+    "account": "Account",
+    "learning": "Learning",
+    "notifications": "Notifications",
+    "appearance": "Appearance",
+    "help": "Help"
+  },
+  "profile": {
+    "title": "Profile",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "save": "Save profile"
+  },
+  "password": {
+    "title": "Password",
+    "current": "Current password",
+    "new": "New password",
+    "confirm": "Confirm new password",
+    "save": "Change password",
+    "mismatch": "Passwords do not match"
+  },
+  "emailPrefs": {
+    "title": "Email preferences",
+    "hint": "Transactional emails (password reset, invitations) are always sent.",
+    "reminders": "Study reminders",
+    "digest": "Weekly digest",
+    "productUpdates": "Product updates",
+    "marketing": "Marketing emails",
+    "save": "Save email preferences"
+  },
+  "learning": {
+    "title": "Learning profile",
+    "hint": "Used to tailor lesson depth, examples, and AI tutoring.",
+    "educationLevel": "Education level",
+    "country": "Country",
+    "difficulty": "Default lesson difficulty",
+    "ageGroup": "Age group (optional)",
+    "language": "Preferred tutoring language (optional)",
+    "goals": "Learning goals (optional)",
+    "save": "Save learning profile",
+    "missing": "Education level and country are required."
+  },
+  "appearance": {
+    "title": "Appearance & language",
+    "hint": "Choose how Adesia looks and which language the interface uses.",
+    "uiLanguage": "Interface language",
+    "theme": "Color theme"
+  },
+  "help": {
+    "title": "Help & onboarding",
+    "hint": "Replay the guided tour to learn how Self-learn, Practice, and subscriptions work.",
+    "replay": "Replay onboarding tour"
+  },
+  "messages": {
+    "profileUpdated": "Profile updated",
+    "passwordChanged": "Password changed",
+    "emailUpdated": "Email preferences updated",
+    "learningUpdated": "Learning profile updated"
+  }
+}

@@ -13,6 +13,9 @@ export const register = async (payload) => {
 export const updateProfile = async (payload) =>
   unwrapData(await api.patch(authEndpoints.PROFILE, payload));
 
+export const updateLearningProfile = async (payload) =>
+  unwrapData(await api.patch(authEndpoints.LEARNING_PROFILE, payload));
+
 export const changePassword = async (payload) =>
   unwrapData(await api.patch(authEndpoints.CHANGE_PASSWORD, payload));
 

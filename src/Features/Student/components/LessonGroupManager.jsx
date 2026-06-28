@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { ActionIcon, Menu, Select, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { FolderPlus, Layers, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
+import { BookOpen, FolderPlus, Layers, MoreHorizontal, Pencil, Trash2 } from 'lucide-react';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { GhostButton } from '../../../shared/components/GradientButton';
 import { AdesiaModal } from '../../../shared/components/AdesiaModal';
@@ -14,6 +14,78 @@ import {
   listLessonGroups,
   updateLessonGroup,
 } from '../services/student.services';
+
+const CollectionRow = ({
+  active,
+  title,
+  count,
+  onClick,
+  onEdit,
+  onDelete,
+  showMenu = true,
+  icon: Icon = Layers,
+}) => (
+  <div
+    className={`flex min-w-0 items-center gap-2 rounded-xl border px-3 py-3 transition sm:px-3.5 ${
+      active
+        ? 'border-primary/40 bg-primary/5 ring-1 ring-primary/20'
+        : 'border-border/40 bg-card/40 hover:border-primary/25 hover:bg-primary/[0.03]'
+    }`}
+  >
+    <button
+      type="button"
+      onClick={onClick}
+      className="flex min-w-0 flex-1 items-center gap-3 text-left"
+    >
+      <div
+        className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
+          active ? 'bg-primary/15 text-primary' : 'bg-muted/60 text-muted-foreground'
+        }`}
+      >
+        <Icon className="h-4 w-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="line-clamp-2 font-medium leading-snug text-foreground">{title}</p>
+        {typeof count === 'number' && (
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            {count}
+            {' lesson'}
+            {count !== 1 ? 's' : ''}
+          </p>
+        )}
+      </div>
+    </button>
+    {showMenu && onEdit && onDelete && (
+      <Menu position="bottom-end" withinPortal>
+        <Menu.Target>
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            aria-label={`Options for ${title}`}
+            className="shrink-0"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </ActionIcon>
+        </Menu.Target>
+        <Menu.Dropdown>
+          <Menu.Item
+            leftSection={<Pencil className="h-3.5 w-3.5" />}
+            onClick={onEdit}
+          >
+            Rename
+          </Menu.Item>
+          <Menu.Item
+            color="red"
+            leftSection={<Trash2 className="h-3.5 w-3.5" />}
+            onClick={onDelete}
+          >
+            Delete
+          </Menu.Item>
+        </Menu.Dropdown>
+      </Menu>
+    )}
+  </div>
+);
 
 const LessonGroupManager = ({
   organizationId,
@@ -167,11 +239,13 @@ const LessonGroupManager = ({
     </p>
   );
 
+  const showAllActive = onGroupSelect && !selectedGroupFilter;
+
   return (
     <>
-      <GlassCard className={`${compact ? 'p-4' : 'p-5'}`}>
+      <GlassCard className={`min-w-0 ${compact ? 'p-4' : 'p-4 sm:p-5'}`}>
         <div className="mb-3 flex items-center gap-2">
-          <Layers className="h-4 w-4 text-primary" />
+          <Layers className="h-4 w-4 shrink-0 text-primary" />
           <h3 className="text-sm font-semibold text-foreground">
             {lessonId ? 'Lesson collection' : 'Lesson collections'}
           </h3>
@@ -180,11 +254,11 @@ const LessonGroupManager = ({
         {orgHint}
 
         {lessonId ? (
-          <div className="flex flex-wrap items-end gap-2">
+          <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-end">
             <Select
               label="Collection"
               description="Organize this lesson into a learning path."
-              className="min-w-[220px] flex-1"
+              className="min-w-0 w-full flex-1 sm:min-w-[220px]"
               data={selectData}
               value={selectedGroup}
               disabled={loading || saving}
@@ -192,7 +266,7 @@ const LessonGroupManager = ({
             />
             <GhostButton
               type="button"
-              className="!px-3 !py-2 text-sm"
+              className="w-full !px-3 !py-2.5 text-sm sm:w-auto"
               onClick={() => setCreateOpen(true)}
             >
               <FolderPlus className="h-4 w-4" />
@@ -200,7 +274,7 @@ const LessonGroupManager = ({
             </GhostButton>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-3">
             {loading ? (
               <p className="text-sm text-muted-foreground">Loading collections…</p>
             ) : groups.length === 0 ? (
@@ -208,57 +282,67 @@ const LessonGroupManager = ({
                 Create a collection to organize self-learn lessons into a path.
               </p>
             ) : (
-              <ul className="space-y-1">
-                {groups.map((g) => (
-                  <li
-                    key={g.id}
-                    className={`flex items-center justify-between gap-2 rounded-lg border px-3 py-2 text-sm transition ${
-                      selectedGroupFilter === g.id
-                        ? 'border-primary/40 bg-primary/5'
-                        : 'border-border/40'
-                    }`}
-                  >
+              <>
+                {onGroupSelect && groups.length > 0 && (
+                  <div className="flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] sm:hidden [&::-webkit-scrollbar]:hidden">
                     <button
                       type="button"
-                      className="min-w-0 flex-1 text-left"
-                      onClick={() => onGroupSelect?.(g.id)}
+                      onClick={() => onGroupSelect('all')}
+                      className={`shrink-0 rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                        showAllActive
+                          ? 'border-primary bg-primary/10 text-primary'
+                          : 'border-border/60 text-muted-foreground'
+                      }`}
                     >
-                      <span className="block truncate font-medium text-foreground">{g.title}</span>
-                      <span className="text-xs text-muted-foreground">
-                        {g.lessonCount ?? 0}
-                        {' lesson'}
-                        {(g.lessonCount ?? 0) !== 1 ? 's' : ''}
-                      </span>
+                      All
                     </button>
-                    <Menu position="bottom-end" withinPortal>
-                      <Menu.Target>
-                        <ActionIcon variant="subtle" color="gray" aria-label="Group options">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </ActionIcon>
-                      </Menu.Target>
-                      <Menu.Dropdown>
-                        <Menu.Item
-                          leftSection={<Pencil className="h-3.5 w-3.5" />}
-                          onClick={() => openEdit(g)}
-                        >
-                          Rename
-                        </Menu.Item>
-                        <Menu.Item
-                          color="red"
-                          leftSection={<Trash2 className="h-3.5 w-3.5" />}
-                          onClick={() => openDelete(g)}
-                        >
-                          Delete
-                        </Menu.Item>
-                      </Menu.Dropdown>
-                    </Menu>
-                  </li>
-                ))}
-              </ul>
+                    {groups.map((g) => (
+                      <button
+                        key={g.id}
+                        type="button"
+                        onClick={() => onGroupSelect(g.id)}
+                        className={`max-w-[10rem] shrink-0 truncate rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                          selectedGroupFilter === g.id
+                            ? 'border-primary bg-primary/10 text-primary'
+                            : 'border-border/60 text-muted-foreground'
+                        }`}
+                      >
+                        {g.title}
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <ul className="space-y-2">
+                  {onGroupSelect && (
+                    <li>
+                      <CollectionRow
+                        active={showAllActive}
+                        title="All lessons"
+                        icon={BookOpen}
+                        showMenu={false}
+                        onClick={() => onGroupSelect('all')}
+                      />
+                    </li>
+                  )}
+                  {groups.map((g) => (
+                    <li key={g.id}>
+                      <CollectionRow
+                        active={selectedGroupFilter === g.id}
+                        title={g.title}
+                        count={g.lessonCount ?? 0}
+                        onClick={() => onGroupSelect?.(g.id)}
+                        onEdit={() => openEdit(g)}
+                        onDelete={() => openDelete(g)}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              </>
             )}
             <GhostButton
               type="button"
-              className="mt-2 !px-3 !py-2 text-sm"
+              className="w-full !px-3 !py-2.5 text-sm sm:w-auto"
               onClick={() => setCreateOpen(true)}
             >
               <FolderPlus className="h-4 w-4" />

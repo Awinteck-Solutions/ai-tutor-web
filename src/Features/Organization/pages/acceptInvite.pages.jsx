@@ -191,7 +191,7 @@ const AcceptInvitePage = () => {
                           First name
                         </label>
                         <div className="relative">
-                          <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <User className="input-adornment-icon" />
                           <input
                             id="firstName"
                             className="input-adesia pl-10"
@@ -222,7 +222,7 @@ const AcceptInvitePage = () => {
                         Create password
                       </label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Lock className="input-adornment-icon" />
                         <input
                           id="password"
                           type="password"
@@ -240,7 +240,7 @@ const AcceptInvitePage = () => {
                         Confirm password
                       </label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Lock className="input-adornment-icon" />
                         <input
                           id="confirmPassword"
                           type="password"

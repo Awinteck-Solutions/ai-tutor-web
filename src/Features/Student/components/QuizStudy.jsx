@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Loader, Progress, Radio, TextInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { ChevronRight, Loader2, Save, Trophy } from 'lucide-react';
+import { ChevronRight, Eye, Loader2, Save, Trophy } from 'lucide-react';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { GradientButton } from '../../../shared/components/GradientButton';
 import { getErrorMessage } from '../../../shared/utils/formatters';
@@ -20,10 +20,69 @@ const answersFromDraft = (draft, questions) => {
   return { answers: map, step };
 };
 
+const normalizeAnswer = (value) => (value ?? '').trim().toLowerCase();
+
+const answersMatch = (userAnswer, expected) => {
+  const user = normalizeAnswer(userAnswer);
+  const correct = normalizeAnswer(expected);
+  return Boolean(user) && Boolean(correct) && user === correct;
+};
+
+const mapGradedAnswersToReview = (gradedAnswers = []) =>
+  gradedAnswers.map((a) => ({
+    questionId: a.questionId?.toString?.() ?? a.questionId,
+    question: a.question ?? '',
+    userAnswer: a.userAnswer ?? a.answer ?? '',
+    correctAnswer: a.correctAnswer ?? '',
+    explanation: a.explanation,
+    isCorrect: Boolean(a.isCorrect),
+  }));
+
+const gradePracticeQuiz = (questions, answers) => {
+  let correctAnswers = 0;
+  const answerReview = questions.map((question) => {
+    const qId = question.id || question._id;
+    const userAnswer = answers[qId] ?? '';
+    const expected = (question.correctAnswer ?? '').trim();
+    const isCorrect = answersMatch(userAnswer, expected);
+    if (isCorrect) correctAnswers += 1;
+    return {
+      questionId: qId,
+      question: question.question,
+      userAnswer,
+      correctAnswer: expected,
+      explanation: question.explanation,
+      isCorrect,
+    };
+  });
+  const totalQuestions = questions.length;
+  const score = totalQuestions
+    ? Math.round((correctAnswers / totalQuestions) * 100)
+    : 0;
+  return { score, correctAnswers, totalQuestions, practice: true, answerReview };
+};
+
+const buildAnswerReview = (questions, answers) =>
+  questions.map((question) => {
+    const qId = question.id || question._id;
+    const userAnswer = answers[qId] ?? '';
+    const expected = (question.correctAnswer ?? '').trim();
+    const isCorrect = answersMatch(userAnswer, expected);
+    return {
+      questionId: qId,
+      question: question.question,
+      userAnswer,
+      correctAnswer: expected,
+      explanation: question.explanation,
+      isCorrect,
+    };
+  });
+
 const QuizStudy = ({
   quiz,
   draft: initialDraft,
   retakeMode = false,
+  practiceOnly = false,
   onComplete,
   onSaved,
   onCloseRequest,
@@ -36,6 +95,7 @@ const QuizStudy = ({
   const [submitting, setSubmitting] = useState(false);
   const [saving, setSaving] = useState(false);
   const [result, setResult] = useState(null);
+  const [showAnswerReview, setShowAnswerReview] = useState(false);
   const dirtyRef = useRef(false);
 
   useEffect(() => {
@@ -43,6 +103,7 @@ const QuizStudy = ({
       setAnswers({});
       setStep(0);
       setResult(null);
+      setShowAnswerReview(false);
       dirtyRef.current = false;
       return;
     }
@@ -50,6 +111,7 @@ const QuizStudy = ({
     setAnswers(restored);
     setStep(restoredStep);
     setResult(null);
+    setShowAnswerReview(false);
     dirtyRef.current = false;
   }, [quiz?.quizId, initialDraft, questions, retakeMode]);
 
@@ -67,7 +129,7 @@ const QuizStudy = ({
   }), [answers, questions, step]);
 
   const persistDraft = useCallback(async () => {
-    if (!quiz?.quizId || !hasProgress) return null;
+    if (practiceOnly || !quiz?.quizId || !hasProgress) return null;
     setSaving(true);
     try {
       const saved = await saveQuizDraft(quiz.quizId, buildPayload());
@@ -80,11 +142,12 @@ const QuizStudy = ({
     } finally {
       setSaving(false);
     }
-  }, [quiz?.quizId, hasProgress, buildPayload, onSaved]);
+  }, [quiz?.quizId, hasProgress, buildPayload, onSaved, practiceOnly]);
 
   useEffect(() => {
+    if (practiceOnly) return undefined;
     onRegisterSave?.(() => persistDraft());
-  }, [onRegisterSave, persistDraft]);
+  }, [onRegisterSave, persistDraft, practiceOnly]);
 
   useEffect(() => {
     const handler = (e) => {
@@ -97,12 +160,12 @@ const QuizStudy = ({
   }, [hasProgress]);
 
   const requestClose = useCallback(() => {
-    if (!hasProgress) {
+    if (practiceOnly || !hasProgress) {
       onCloseRequest?.();
       return;
     }
     onCloseWithUnsaved?.();
-  }, [hasProgress, onCloseRequest, onCloseWithUnsaved]);
+  }, [practiceOnly, hasProgress, onCloseRequest, onCloseWithUnsaved]);
 
   if (!quiz) {
     return (
@@ -113,6 +176,50 @@ const QuizStudy = ({
   }
 
   if (result) {
+    if (showAnswerReview && result.answerReview?.length) {
+      return (
+        <div className="space-y-4">
+          {(result.answerReview ?? []).map((a, i) => (
+            <div
+              key={a.questionId || i}
+              className={`rounded-xl border p-4 ${
+                a.isCorrect
+                  ? 'border-emerald-500/30 bg-emerald-500/5'
+                  : 'border-red-500/30 bg-red-500/5'
+              }`}
+            >
+              <p className="text-sm font-medium text-foreground">{a.question}</p>
+              <p className="mt-2 text-sm">
+                <span className="text-muted-foreground">Your answer: </span>
+                {a.userAnswer || '—'}
+              </p>
+              <p className="mt-1 text-sm">
+                <span className="text-muted-foreground">Correct answer: </span>
+                <span className={a.isCorrect ? 'text-emerald-600 dark:text-emerald-400' : 'text-primary'}>
+                  {a.correctAnswer || '—'}
+                </span>
+              </p>
+              {a.explanation ? (
+                <p className="mt-2 text-xs text-muted-foreground">{a.explanation}</p>
+              ) : null}
+            </div>
+          ))}
+          <div className="flex flex-wrap justify-end gap-2 pt-2">
+            <button
+              type="button"
+              className="btn-outline !px-4 !py-2 text-sm"
+              onClick={() => setShowAnswerReview(false)}
+            >
+              Back to score
+            </button>
+            <GradientButton type="button" onClick={() => onComplete?.(result)}>
+              Done
+            </GradientButton>
+          </div>
+        </div>
+      );
+    }
+
     return (
       <GlassCard className="quiz-result-enter p-8 text-center">
         <Trophy className="mx-auto mb-4 h-12 w-12 text-primary" />
@@ -121,13 +228,25 @@ const QuizStudy = ({
           {result.correctAnswers} of {result.totalQuestions} correct
         </p>
         {result.practice ? (
-          <p className="mt-3 text-sm text-muted-foreground">Practice retake — not saved to your record</p>
+          <p className="mt-3 text-sm text-muted-foreground">Chat practice — not saved to your record</p>
         ) : result.xp?.awarded ? (
           <p className="mt-3 text-sm font-medium text-primary">+{result.xp.xpAmount} XP earned</p>
         ) : null}
-        <GradientButton type="button" className="mt-6" onClick={() => onComplete?.(result)}>
-          Done
-        </GradientButton>
+        <div className="mt-6 flex flex-wrap justify-center gap-2">
+          {result.answerReview?.length > 0 && (
+            <button
+              type="button"
+              className="btn-outline inline-flex items-center gap-2 !px-4 !py-2 text-sm"
+              onClick={() => setShowAnswerReview(true)}
+            >
+              <Eye className="h-4 w-4" />
+              View answers
+            </button>
+          )}
+          <GradientButton type="button" onClick={() => onComplete?.(result)}>
+            Done
+          </GradientButton>
+        </div>
       </GlassCard>
     );
   }
@@ -157,17 +276,29 @@ const QuizStudy = ({
 
     setSubmitting(true);
     try {
-      const res = retakeMode
-        ? await submitQuizPractice(quiz.quizId, payload)
-        : await submitQuiz(quiz.quizId, payload);
-      setResult({ ...res, practice: retakeMode || res.practice });
-      dirtyRef.current = false;
-      if (!retakeMode && res?.xp?.awarded) {
-        notifications.show({
-          title: `+${res.xp.xpAmount} XP`,
-          message: 'First quiz completion',
-          color: 'green',
+      if (practiceOnly) {
+        setResult(gradePracticeQuiz(questions, answers));
+        dirtyRef.current = false;
+      } else {
+        const res = retakeMode
+          ? await submitQuizPractice(quiz.quizId, payload)
+          : await submitQuiz(quiz.quizId, payload);
+        const answerReview = res?.answers?.length
+          ? mapGradedAnswersToReview(res.answers)
+          : buildAnswerReview(questions, answers);
+        setResult({
+          ...res,
+          practice: retakeMode || res.practice,
+          answerReview,
         });
+        dirtyRef.current = false;
+        if (!retakeMode && res?.xp?.awarded) {
+          notifications.show({
+            title: `+${res.xp.xpAmount} XP`,
+            message: 'First quiz completion',
+            color: 'green',
+          });
+        }
       }
     } catch (err) {
       notifications.show({ title: 'Error', message: getErrorMessage(err), color: 'red' });
@@ -253,7 +384,7 @@ const QuizStudy = ({
           Close quiz
         </button>
         <div className="flex flex-wrap gap-2">
-          {!retakeMode && (
+          {!retakeMode && !practiceOnly && (
             <button
               type="button"
               className="btn-outline flex items-center gap-2 !px-3 !py-2 text-sm"

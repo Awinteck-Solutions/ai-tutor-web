@@ -8,15 +8,19 @@ import { AdesiaLogo } from '../../../shared/components/AdesiaLogo';
 import { GlowOrbs } from '../../../shared/components/GlowOrbs';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { GradientText } from '../../../shared/components/GradientText';
-import { GradientButton, GhostButton } from '../../../shared/components/GradientButton';
+import { GradientButton } from '../../../shared/components/GradientButton';
+import PasswordInput from '../../../shared/components/PasswordInput';
 import { ThemeToggle } from '../../../shared/components/ThemeToggle';
 import { useAuth } from '../../../shared/context/AuthContext';
 import { capitalizeWords } from '../../../utils/page.helper';
+import AuthDivider from '../components/AuthDivider';
+import { GOOGLE_CLIENT_ID } from '../../../constants/auth.constant';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 
 const RegisterPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { register, getPortalPath, user } = useAuth();
+  const { register, loginWithGoogle, getPortalPath, user } = useAuth();
 
   useEffect(() => {
     if (user) navigate(getPortalPath(user.role), { replace: true });
@@ -69,6 +73,19 @@ const RegisterPage = () => {
     },
   });
 
+  const handleGoogleSuccess = async (credential) => {
+    const registered = await loginWithGoogle(credential);
+    notifications.show({
+      title: 'Welcome to Adesia',
+      message: 'Your account is ready.',
+      color: 'green',
+    });
+    navigate(getPortalPath(registered.role), {
+      replace: true,
+      state: { showOnboarding: true },
+    });
+  };
+
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background p-4 py-10">
       <GlowOrbs />
@@ -95,7 +112,7 @@ const RegisterPage = () => {
                   First name
                 </label>
                 <div className="relative">
-                  <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <User className="input-adornment-icon" />
                   <input id="firstName" className="input-adesia pl-10" {...formik.getFieldProps('firstName')} />
                 </div>
                 {formik.touched.firstName && formik.errors.firstName && (
@@ -118,7 +135,7 @@ const RegisterPage = () => {
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Mail className="input-adornment-icon" />
                 <input id="email" type="email" className="input-adesia pl-10" placeholder="you@email.com" {...formik.getFieldProps('email')} />
               </div>
               {formik.touched.email && formik.errors.email && (
@@ -130,10 +147,11 @@ const RegisterPage = () => {
               <label htmlFor="password" className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Password
               </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input id="password" type="password" className="input-adesia pl-10" {...formik.getFieldProps('password')} />
-              </div>
+              <PasswordInput
+                id="password"
+                leftIcon={Lock}
+                {...formik.getFieldProps('password')}
+              />
               {formik.touched.password && formik.errors.password && (
                 <p className="mt-1 text-xs text-destructive">{formik.errors.password}</p>
               )}
@@ -143,7 +161,11 @@ const RegisterPage = () => {
               <label htmlFor="confirmPassword" className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Confirm password
               </label>
-              <input id="confirmPassword" type="password" className="input-adesia" {...formik.getFieldProps('confirmPassword')} />
+              <PasswordInput
+                id="confirmPassword"
+                leftIcon={Lock}
+                {...formik.getFieldProps('confirmPassword')}
+              />
               {formik.touched.confirmPassword && formik.errors.confirmPassword && (
                 <p className="mt-1 text-xs text-destructive">{formik.errors.confirmPassword}</p>
               )}
@@ -153,6 +175,17 @@ const RegisterPage = () => {
               {submitting ? 'Creating account…' : 'Create free account'}
               {!submitting && <ArrowRight className="h-4 w-4" />}
             </GradientButton>
+
+            {GOOGLE_CLIENT_ID?.trim() && (
+              <>
+                <AuthDivider />
+                <GoogleSignInButton
+                  disabled={submitting}
+                  onSuccess={handleGoogleSuccess}
+                  label="signup_with"
+                />
+              </>
+            )}
           </form>
         </GlassCard>
 

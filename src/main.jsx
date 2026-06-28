@@ -1,14 +1,17 @@
 import { StrictMode, useMemo } from 'react';
 import { createRoot } from 'react-dom/client';
+import { GoogleOAuthProvider } from '@react-oauth/google';
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
 import '@mantine/notifications/styles.css';
 import './index.css';
 import App from './App.jsx';
+import './i18n';
 import { MantineProvider, createTheme } from '@mantine/core';
 import { ModalsProvider } from '@mantine/modals';
 import { DatesProvider } from '@mantine/dates';
 import { Notifications } from '@mantine/notifications';
+import { GOOGLE_CLIENT_ID } from './constants/auth.constant';
 import { AuthProvider } from './shared/context/AuthContext';
 import { ThemeProvider, useTheme } from './shared/context/ThemeContext';
 
@@ -57,14 +60,18 @@ const ThemedMantine = ({ children }) => {
   );
 };
 
+const googleClientId = GOOGLE_CLIENT_ID?.trim() || '';
+
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <ThemeProvider>
       <ThemedMantine>
         <Notifications position="top-right" />
-        <AuthProvider>
-          <App />
-        </AuthProvider>
+        <GoogleOAuthProvider clientId={googleClientId || 'placeholder-client-id'}>
+          <AuthProvider>
+            <App />
+          </AuthProvider>
+        </GoogleOAuthProvider>
       </ThemedMantine>
     </ThemeProvider>
   </StrictMode>,

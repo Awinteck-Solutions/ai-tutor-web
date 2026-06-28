@@ -9,6 +9,7 @@ import {
   Layers,
   LayoutDashboard,
   Settings,
+  Store,
   Upload,
   Users,
   Wrench,
@@ -53,6 +54,7 @@ export const adminNavGroups = [
     items: [
       { label: 'Materials', path: '/admin/materials', icon: Upload },
       { label: 'Lessons', path: '/admin/lessons', icon: FileText },
+      { label: 'Marketplace', path: '/admin/marketplace', icon: Store },
     ],
   },
   {

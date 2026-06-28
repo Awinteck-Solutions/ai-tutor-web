@@ -1,0 +1,2 @@
+/** Google OAuth Web client ID — same value as GOOGLE_CLIENT_ID in api/.env */
+export const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID || '1037558071821-rb51vb1r4jb2lk4dmdrlsmo51lokfj0l.apps.googleusercontent.com';

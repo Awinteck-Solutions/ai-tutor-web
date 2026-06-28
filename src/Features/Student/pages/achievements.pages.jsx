@@ -40,7 +40,7 @@ const StudentAchievementsPage = () => {
       )}
 
       {!loading && stats && (
-        <div className="mb-6 grid gap-4 sm:grid-cols-4">
+        <div className="mb-6 grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-4">
           <StatCard icon={Zap} label="Total XP" value={formatNumber(stats.totalXp)} highlight />
           <StatCard icon={Award} label="Unlocked" value={`${unlockedCount}/${data.achievements.length}`} />
           <StatCard icon={Target} label="Quizzes" value={formatNumber(stats.quizzesTaken)} />
@@ -48,29 +48,29 @@ const StudentAchievementsPage = () => {
         </div>
       )}
 
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid min-w-0 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-3">
         {loading ? <CardGridSkeleton count={6} /> : data.achievements.map((a) => (
           <GlassCard
             key={a.id}
-            className={`flex items-start gap-4 p-6 transition ${
+            className={`flex min-w-0 items-start gap-3 p-4 transition sm:gap-4 sm:p-6 ${
               a.unlocked ? 'border-primary/30' : 'opacity-75'
             }`}
           >
             <div
-              className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl ${
+              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 ${
                 a.unlocked ? 'bg-primary/15 text-primary' : 'bg-muted text-muted-foreground'
               }`}
             >
-              {a.unlocked ? <Award className="h-6 w-6" /> : <Lock className="h-5 w-5" />}
+              {a.unlocked ? <Award className="h-5 w-5 sm:h-6 sm:w-6" /> : <Lock className="h-4 w-4 sm:h-5 sm:w-5" />}
             </div>
             <div className="min-w-0 flex-1">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="font-display font-semibold text-foreground">{a.title}</p>
+              <div className="flex flex-wrap items-start gap-x-2 gap-y-1">
+                <p className="line-clamp-2 min-w-0 flex-1 font-display font-semibold leading-snug text-foreground">{a.title}</p>
                 <AdesiaBadge status={a.unlocked ? 'active' : 'draft'}>
                   {a.unlocked ? 'Unlocked' : 'Locked'}
                 </AdesiaBadge>
               </div>
-              <p className="mt-1 text-sm text-muted-foreground">{a.description}</p>
+              <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{a.description}</p>
             </div>
           </GlassCard>
         ))}

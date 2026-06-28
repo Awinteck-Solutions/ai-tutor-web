@@ -146,11 +146,12 @@ const AddToCollectionModal = ({
               searchable
               nothingFoundMessage="No lessons found"
               disabled={loading || saving}
+              className="w-full min-w-0"
             />
           )}
 
           {initialLessonId && activeLessonTitle && (
-            <p className="text-sm text-muted-foreground">
+            <p className="break-words text-sm text-muted-foreground">
               Organize
               {' '}
               <span className="font-medium text-foreground">&quot;{activeLessonTitle}&quot;</span>
@@ -166,11 +167,12 @@ const AddToCollectionModal = ({
             onChange={(value) => setSelectedGroupId(value ?? '')}
             disabled={loading || saving || !activeLessonId}
             searchable
+            className="w-full min-w-0"
           />
 
           <GhostButton
             type="button"
-            className="!px-3 !py-2 text-sm"
+            className="w-full !px-3 !py-2.5 text-sm sm:w-auto"
             onClick={() => setCreateOpen(true)}
             disabled={!activeLessonId}
           >

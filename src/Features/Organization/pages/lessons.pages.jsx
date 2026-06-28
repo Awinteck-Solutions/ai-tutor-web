@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
-  Modal, MultiSelect, NumberInput, Select, TextInput,
+  Modal,
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { notifications } from '@mantine/notifications';
@@ -18,18 +18,16 @@ import { GlassCard } from '../../../shared/components/GlassCard';
 import { TableSkeleton } from '../../../shared/components/TableSkeleton';
 import { AdesiaModal } from '../../../shared/components/AdesiaModal';
 import { GradientButton } from '../../../shared/components/GradientButton';
+import GenerateLessonFromMaterialsFields from '../../../shared/components/GenerateLessonFromMaterialsFields';
 import StatusBadge from '../../../shared/components/StatusBadge';
 import { useServerList } from '../../../shared/hooks/useServerList';
 import { formatDateTime, getErrorMessage } from '../../../shared/utils/formatters';
 import {
-  deleteLesson, generateLesson, getLessonsPaginated, getMaterials, getSubjectsList, getTopicsList, regenerateLesson,
+  deleteLesson, generateLesson, getLessonsPaginated, regenerateLesson,
 } from '../services/organization.services';
 
 const LessonsPage = () => {
   const { organizationId } = useAuth();
-  const [subjects, setSubjects] = useState([]);
-  const [topics, setTopics] = useState([]);
-  const [materials, setMaterials] = useState([]);
   const [topicId, setTopicId] = useState(null);
   const [submitting, setSubmitting] = useState(false);
   const [opened, { open, close }] = useDisclosure(false);
@@ -51,24 +49,6 @@ const LessonsPage = () => {
   const {
     items: lessons, loading, page, setPage, search, setSearch, meta, reload, rangeStart, rangeEnd,
   } = useServerList(fetchLessons, [organizationId], 10);
-
-  useEffect(() => {
-    if (!organizationId) return;
-    getSubjectsList(organizationId).then(setSubjects);
-  }, [organizationId]);
-
-  const loadTopicsForSubject = async (subjectId) => {
-    const data = await getTopicsList(organizationId, subjectId);
-    setTopics(data);
-    setTopicId(null);
-    setMaterials([]);
-  };
-
-  const loadMaterialsForTopic = async (tid) => {
-    setTopicId(tid);
-    const data = await getMaterials(organizationId, { topicId: tid });
-    setMaterials(data.filter((m) => m.processingStatus === 'COMPLETED'));
-  };
 
   const handleGenerate = async () => {
     if (!topicId || !form.materialIds.length) {
@@ -294,55 +274,12 @@ const LessonsPage = () => {
         submitting={submitting}
         submitDisabled={!topicId || !form.materialIds.length}
       >
-        <div className="space-y-4">
-          <Select
-            label="Subject"
-            placeholder="Select subject"
-            searchable
-            data={subjects.map((s) => ({ value: s.id || s._id, label: s.name }))}
-            onChange={loadTopicsForSubject}
-          />
-          <Select
-            label="Topic"
-            placeholder="Select topic"
-            searchable
-            data={topics.map((t) => ({ value: t.id || t._id, label: t.name }))}
-            value={topicId}
-            onChange={loadMaterialsForTopic}
-          />
-          <TextInput
-            label="Title (optional)"
-            placeholder="Auto-generated if left blank"
-            value={form.title}
-            onChange={(e) => setForm({ ...form, title: e.target.value })}
-          />
-          <Select
-            label="Student level"
-            description="Target depth and vocabulary for the generated lesson."
-            data={[
-              { value: 'beginner', label: 'Beginner' },
-              { value: 'intermediate', label: 'Intermediate' },
-              { value: 'advanced', label: 'Advanced' },
-            ]}
-            value={form.studentLevel}
-            onChange={(value) => setForm({ ...form, studentLevel: value ?? 'intermediate' })}
-          />
-          <MultiSelect
-            label="Source materials"
-            description="Select 1–10 completed materials"
-            searchable
-            data={materials.map((m) => ({ value: m.id || m._id, label: m.title || m.name }))}
-            value={form.materialIds}
-            onChange={(v) => setForm({ ...form, materialIds: v })}
-            maxValues={10}
-          />
-          <NumberInput
-            label="Display order"
-            min={0}
-            value={form.order}
-            onChange={(v) => setForm({ ...form, order: Number(v) || 0 })}
-          />
-        </div>
+        <GenerateLessonFromMaterialsFields
+          organizationId={organizationId}
+          value={form}
+          onChange={setForm}
+          onTopicIdChange={setTopicId}
+        />
       </AdesiaModal>
 
       <Modal opened={confirmOpen} onClose={closeConfirm} title="Delete lesson?" centered>

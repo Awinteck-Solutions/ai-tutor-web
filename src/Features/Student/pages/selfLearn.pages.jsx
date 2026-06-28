@@ -28,6 +28,11 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../../shared/context/AuthContext';
 import { PageHeader } from '../../../shared/components/PageShell';
+import {
+  SelfLearnDetailSkeleton,
+  SelfLearnLessonsListSkeleton,
+  SelfLearnMaterialsSkeleton,
+} from '../../../shared/components/LoadingPrimitives';
 import ListGridToolbar, { filterSelectClass } from '../../../shared/components/ListGridToolbar';
 import DataListFooter from '../../../shared/components/DataListFooter';
 import { useServerList } from '../../../shared/hooks/useServerList';
@@ -141,6 +146,7 @@ const SelfLearnPage = () => {
   const [homeTab, setHomeTab] = useState('lessons');
   const [activeLesson, setActiveLesson] = useState(null);
   const [status, setStatus] = useState(null);
+  const [statusLoading, setStatusLoading] = useState(false);
   const [creating, setCreating] = useState(false);
   const [generating, setGenerating] = useState(null);
   const [fcOptionsOpen, setFcOptionsOpen] = useState(false);
@@ -304,17 +310,22 @@ const SelfLearnPage = () => {
     ? allReadyMaterials
     : materials.filter((m) => m.processingStatus === 'COMPLETED');
 
-  const pollStatus = useCallback(async (lessonId) => {
+  const pollStatus = useCallback(async (lessonId, { silent = false } = {}) => {
     if (!organizationId || !lessonId) return;
-    const data = await getSelfStudyStatus(organizationId, lessonId);
-    setStatus(data);
-    setActiveLesson(data?.lesson ?? { id: lessonId });
+    if (!silent) setStatusLoading(true);
+    try {
+      const data = await getSelfStudyStatus(organizationId, lessonId);
+      setStatus(data);
+      setActiveLesson(data?.lesson ?? { id: lessonId });
+    } finally {
+      if (!silent) setStatusLoading(false);
+    }
   }, [organizationId]);
 
   useEffect(() => {
     if (!activeLesson?.id) return undefined;
     pollStatus(activeLesson.id);
-    const t = setInterval(() => pollStatus(activeLesson.id), 4000);
+    const t = setInterval(() => pollStatus(activeLesson.id, { silent: true }), 4000);
     return () => clearInterval(t);
   }, [activeLesson?.id, pollStatus]);
 
@@ -637,14 +648,18 @@ const SelfLearnPage = () => {
 
         <button
           type="button"
-          onClick={() => { setActiveLesson(null); setStatus(null); }}
+          onClick={() => { setActiveLesson(null); setStatus(null); setStatusLoading(false); }}
           className="mb-4 flex items-center gap-1 text-sm font-medium text-muted-foreground transition hover:text-primary"
         >
           <ArrowLeft className="h-4 w-4" />
           All my lessons
         </button>
 
-        <GlassCard className="mb-6 p-5 sm:p-6">
+        {statusLoading && !status ? (
+          <SelfLearnDetailSkeleton />
+        ) : (
+        <>
+        <GlassCard className="mb-6 p-4 sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <h2 className="font-display text-xl font-semibold text-foreground sm:text-2xl">
@@ -731,7 +746,7 @@ const SelfLearnPage = () => {
         </GlassCard>
 
         {status?.lesson?.hasSourceMaterials && (
-          <GlassCard className="mb-6 p-5">
+          <GlassCard className="mb-6 p-4 sm:p-5">
             <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
               <div className="flex items-center gap-2">
                 <FileUp className="h-5 w-5 text-primary" />
@@ -810,7 +825,7 @@ const SelfLearnPage = () => {
           />
         </div>
 
-        <GlassCard className="mb-6 p-5">
+        <GlassCard className="mb-6 p-4 sm:p-5">
           <div className="mb-4 flex items-center gap-2">
             <Layers className="h-5 w-5 text-primary" />
             <h3 className="font-display font-semibold text-foreground">Flashcards</h3>
@@ -851,7 +866,7 @@ const SelfLearnPage = () => {
               {status.flashcardSets.map((s) => (
                 <li
                   key={s.id}
-                  className="flex items-center justify-between text-sm"
+                  className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between"
                 >
                   <span className="font-medium text-foreground">{s.title}</span>
                   <StatusBadge status={s.generationStatus} />
@@ -861,7 +876,7 @@ const SelfLearnPage = () => {
           )}
         </GlassCard>
 
-        <GlassCard className="p-5">
+        <GlassCard className="p-4 sm:p-5">
           <div className="mb-4 flex items-center gap-2">
             <Brain className="h-5 w-5 text-primary" />
             <h3 className="font-display font-semibold text-foreground">Quiz</h3>
@@ -902,7 +917,7 @@ const SelfLearnPage = () => {
               {status.quizzes.map((q) => (
                 <li
                   key={q.id}
-                  className="flex items-center justify-between text-sm"
+                  className="flex flex-col gap-2 text-sm sm:flex-row sm:items-center sm:justify-between"
                 >
                   <span className="text-foreground">{q.title}</span>
                   <StatusBadge status={q.generationStatus} />
@@ -911,6 +926,8 @@ const SelfLearnPage = () => {
             </ul>
           )}
         </GlassCard>
+        </>
+        )}
         </>
         )}
 
@@ -1042,7 +1059,7 @@ const SelfLearnPage = () => {
       </div>
 
       {subscription?.applyFreeLimits && subscription.limits && (
-        <GlassCard className="mb-6 p-5">
+        <GlassCard className="mb-6 p-4 sm:p-5">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-primary" />
@@ -1142,7 +1159,7 @@ const SelfLearnPage = () => {
           </ListGridToolbar>
 
           {lessonsLoading ? (
-            <p className="py-12 text-center text-sm text-muted-foreground">Loading lessons…</p>
+            <SelfLearnLessonsListSkeleton />
           ) : lessons.length === 0 ? (
             <GlassCard className="flex flex-col items-center px-6 py-14 text-center">
               <Sparkles className="mb-4 h-12 w-12 text-primary/60" />
@@ -1244,7 +1261,7 @@ const SelfLearnPage = () => {
           </ListGridToolbar>
 
           {materialsLoading ? (
-            <p className="py-12 text-center text-sm text-muted-foreground">Loading uploads…</p>
+            <SelfLearnMaterialsSkeleton />
           ) : materials.length === 0 ? (
             <GlassCard className="flex flex-col items-center px-6 py-12 text-center">
               <FileUp className="mb-3 h-10 w-10 text-primary/60" />

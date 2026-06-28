@@ -1,0 +1,71 @@
+{
+  "title": "Marketplace",
+  "description": "Découvrez des leçons préparées par Adesia, prêtes à importer.",
+  "searchPlaceholder": "Rechercher leçons, matières, tags…",
+  "tabs": {
+    "browse": "Parcourir",
+    "library": "Ma bibliothèque"
+  },
+  "sort": {
+    "label": "Trier par",
+    "newest": "Plus récent",
+    "popular": "Plus téléchargé",
+    "views": "Plus consulté"
+  },
+  "filters": {
+    "search": "Rechercher",
+    "refine": "Affiner",
+    "display": "Tri et affichage",
+    "clear": "Effacer les filtres",
+    "academicLevel": "Niveau académique",
+    "pricing": "Tarification",
+    "subject": "Matière",
+    "featuredOnly": "En vedette uniquement"
+  },
+  "card": {
+    "flashcards": "{{count}} flashcards",
+    "quiz": "{{count}} questions",
+    "free": "Gratuit",
+    "imported": "Déjà importé"
+  },
+  "detail": {
+    "overview": "Aperçu",
+    "objectives": "Objectifs",
+    "preview": "Aperçu du contenu",
+    "stats": "Engagement",
+    "importCta": "Importer dans mon espace",
+    "purchaseCta": "Débloquer et importer",
+    "importAgain": "Ouvrir la leçon importée",
+    "purchaseFirst": "Achat requis pour les ressources payantes"
+  },
+  "messages": {
+    "importSuccess": "Leçon importée avec succès",
+    "importExists": "Vous avez déjà importé cette leçon",
+    "purchaseSuccess": "Achat effectué — vous pouvez importer",
+    "loadError": "Impossible de charger le marketplace"
+  },
+  "emptyFiltered": "Aucune leçon ne correspond à vos filtres.",
+  "emptyComingSoon": {
+    "title": "Bientôt disponible",
+    "description": "Le Marketplace vous permettra de découvrir des leçons prêtes à l'emploi, préparées par votre organisation—avec résumés, flashcards et quiz—et de les importer dans votre espace en un clic. Nous préparons le premier catalogue."
+  },
+  "library": {
+    "title": "Achetés et importés",
+    "description": "Leçons débloquées ou ajoutées à votre espace.",
+    "emptyTitle": "Votre bibliothèque est vide",
+    "filters": {
+      "all": "Tous",
+      "imported": "Importés",
+      "purchased": "Achetés"
+    },
+    "imported": "Importé",
+    "purchased": "Acheté",
+    "purchasedImported": "Acheté et importé",
+    "purchasedOn": "Acheté le {{date}}",
+    "importedOn": "Importé le {{date}}",
+    "openLesson": "Ouvrir",
+    "importNow": "Importer",
+    "viewListing": "Voir la fiche",
+    "empty": "Lors du lancement du catalogue, vos leçons importées ou achetées apparaîtront ici."
+  }
+}

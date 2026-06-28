@@ -18,6 +18,8 @@ import AnalyseStudentPage from '../../../shared/pages/AnalyseStudentPage';
 import AuditPage from '../pages/audit.pages';
 import JobsPage from '../pages/jobs.pages';
 import NotificationsPage from '../pages/notifications.pages';
+import MarketplacePage from '../../Marketplace/pages/marketplace.pages';
+import MarketplaceDetailPage from '../../Marketplace/pages/marketplaceDetail.pages';
 
 /** Route elements nested under /admin — do not wrap in another <Routes>. */
 export const organizationRoutes = (
@@ -43,5 +45,15 @@ export const organizationRoutes = (
     <Route path="audit" element={<AuditPage />} />
     <Route path="jobs" element={<JobsPage />} />
     <Route path="notifications" element={<NotificationsPage />} />
+    <Route path="marketplace" element={<MarketplacePage portalBase="/admin" getLessonPath={(id) => `/admin/lessons/${id}/preview`} />} />
+    <Route
+      path="marketplace/:id"
+      element={
+        <MarketplaceDetailPage
+          portalBase="/admin"
+          getLessonPath={(lessonId) => `/admin/lessons/${lessonId}/preview`}
+        />
+      }
+    />
   </>
 );

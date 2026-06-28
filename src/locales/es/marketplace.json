@@ -1,0 +1,71 @@
+{
+  "title": "Marketplace",
+  "description": "Descubre lecciones curadas por Adesia listas para importar.",
+  "searchPlaceholder": "Buscar lecciones, materias, etiquetas…",
+  "tabs": {
+    "browse": "Explorar",
+    "library": "Mi biblioteca"
+  },
+  "sort": {
+    "label": "Ordenar por",
+    "newest": "Más reciente",
+    "popular": "Más descargado",
+    "views": "Más visto"
+  },
+  "filters": {
+    "search": "Buscar",
+    "refine": "Refinar",
+    "display": "Orden y vista",
+    "clear": "Limpiar filtros",
+    "academicLevel": "Nivel académico",
+    "pricing": "Precio",
+    "subject": "Materia",
+    "featuredOnly": "Solo destacados"
+  },
+  "card": {
+    "flashcards": "{{count}} tarjetas",
+    "quiz": "{{count}} preguntas",
+    "free": "Gratis",
+    "imported": "Ya importado"
+  },
+  "detail": {
+    "overview": "Resumen",
+    "objectives": "Objetivos",
+    "preview": "Vista previa",
+    "stats": "Engagement",
+    "importCta": "Importar a mi espacio",
+    "purchaseCta": "Desbloquear e importar",
+    "importAgain": "Abrir lección importada",
+    "purchaseFirst": "Se requiere compra para recursos de pago"
+  },
+  "messages": {
+    "importSuccess": "Lección importada correctamente",
+    "importExists": "Ya importaste esta lección",
+    "purchaseSuccess": "Compra completada — ya puedes importar",
+    "loadError": "No se pudo cargar el marketplace"
+  },
+  "emptyFiltered": "Ninguna lección coincide con tus filtros.",
+  "emptyComingSoon": {
+    "title": "Próximamente",
+    "description": "Marketplace es donde descubrirás lecciones listas para usar, curadas por tu organización—con resúmenes, tarjetas y cuestionarios—e importarlas a tu espacio con un clic. Estamos preparando el primer catálogo."
+  },
+  "library": {
+    "title": "Comprados e importados",
+    "description": "Lecciones desbloqueadas o añadidas a tu espacio.",
+    "emptyTitle": "Tu biblioteca está vacía",
+    "filters": {
+      "all": "Todos",
+      "imported": "Importados",
+      "purchased": "Comprados"
+    },
+    "imported": "Importado",
+    "purchased": "Comprado",
+    "purchasedImported": "Comprado e importado",
+    "purchasedOn": "Comprado el {{date}}",
+    "importedOn": "Importado el {{date}}",
+    "openLesson": "Abrir",
+    "importNow": "Importar ahora",
+    "viewListing": "Ver ficha",
+    "empty": "Cuando se publique el catálogo, aquí aparecerán las lecciones que importes o compres."
+  }
+}

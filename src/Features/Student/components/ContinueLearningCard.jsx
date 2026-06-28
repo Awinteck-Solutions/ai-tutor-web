@@ -45,18 +45,18 @@ const ContinueLearningCard = ({
   };
 
   return (
-    <GlassCard className="border-primary/20 bg-primary/5 p-5">
+    <GlassCard className="border-primary/20 bg-primary/5 p-4 sm:p-5">
       <div className="mb-2 flex items-center gap-2">
-        <Sparkles className="h-5 w-5 text-primary" />
+        <Sparkles className="h-5 w-5 shrink-0 text-primary" />
         <h3 className="font-display text-sm font-semibold text-foreground">Continue your path</h3>
       </div>
       <p className="mb-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
         Suggested next lesson
       </p>
-      <p className="mb-4 text-sm leading-relaxed text-foreground">{suggestion}</p>
+      <p className="mb-4 line-clamp-4 text-sm leading-relaxed text-foreground">{suggestion}</p>
       <GradientButton
         type="button"
-        className="!px-4 !py-2"
+        className="w-full !px-4 !py-2 sm:w-auto"
         onClick={handleCreateNext}
         disabled={creating}
       >

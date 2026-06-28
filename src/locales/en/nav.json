@@ -1,0 +1,23 @@
+{
+  "student": {
+    "dashboard": "Dashboard",
+    "selfLearn": "Self-learn",
+    "lessons": "Lessons",
+    "marketplace": "Marketplace",
+    "practice": "Practice",
+    "chat": "AI Chat",
+    "analyse": "Learning report",
+    "milestones": "Milestones",
+    "achievements": "Achievements",
+    "leaderboard": "Leaderboard",
+    "subscription": "Subscription",
+    "notifications": "Notifications",
+    "settings": "Settings"
+  },
+  "teacher": {
+    "marketplace": "Marketplace"
+  },
+  "admin": {
+    "marketplace": "Marketplace"
+  }
+}

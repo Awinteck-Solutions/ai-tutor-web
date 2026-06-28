@@ -8,16 +8,20 @@ import { AdesiaLogo } from '../../../shared/components/AdesiaLogo';
 import { GlowOrbs } from '../../../shared/components/GlowOrbs';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { GradientText } from '../../../shared/components/GradientText';
-import { GradientButton, GhostButton } from '../../../shared/components/GradientButton';
+import { GradientButton } from '../../../shared/components/GradientButton';
+import PasswordInput from '../../../shared/components/PasswordInput';
 import { ThemeToggle } from '../../../shared/components/ThemeToggle';
 import { useAuth } from '../../../shared/context/AuthContext';
 import { capitalizeWords } from '../../../utils/page.helper';
 import { ForgetPasswordModal } from '../components/modals/forgetPasswordModal';
+import AuthDivider from '../components/AuthDivider';
+import { GOOGLE_CLIENT_ID } from '../../../constants/auth.constant';
+import GoogleSignInButton from '../components/GoogleSignInButton';
 
 const LoginPage = () => {
   const [submitting, setSubmitting] = useState(false);
   const navigate = useNavigate();
-  const { login, getPortalPath, user } = useAuth();
+  const { login, loginWithGoogle, getPortalPath, user } = useAuth();
 
   useEffect(() => {
     if (user) navigate(getPortalPath(user.role), { replace: true });
@@ -47,6 +51,15 @@ const LoginPage = () => {
     },
   });
 
+  const handleGoogleSuccess = async (credential) => {
+    const loggedInUser = await loginWithGoogle(credential);
+    notifications.show({ title: 'Welcome back', message: 'Signed in with Google', color: 'green' });
+    navigate(getPortalPath(loggedInUser.role), {
+      replace: true,
+      state: loggedInUser.needsLearningProfileSetup ? { showOnboarding: true } : undefined,
+    });
+  };
+
   return (
     <div className="relative flex min-h-screen items-center justify-center bg-background p-4">
       <GlowOrbs />
@@ -72,7 +85,7 @@ const LoginPage = () => {
                 Email
               </label>
               <div className="relative">
-                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Mail className="input-adornment-icon" />
                 <input
                   id="email"
                   type="email"
@@ -90,16 +103,12 @@ const LoginPage = () => {
               <label htmlFor="password" className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
                 Password
               </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <input
-                  id="password"
-                  type="password"
-                  className="input-adesia pl-10"
-                  placeholder="••••••••"
-                  {...formik.getFieldProps('password')}
-                />
-              </div>
+              <PasswordInput
+                id="password"
+                leftIcon={Lock}
+                placeholder="••••••••"
+                {...formik.getFieldProps('password')}
+              />
               {formik.touched.password && formik.errors.password && (
                 <p className="mt-1 text-xs text-destructive">{formik.errors.password}</p>
               )}
@@ -117,6 +126,17 @@ const LoginPage = () => {
               {submitting ? 'Signing in…' : 'Sign in'}
               {!submitting && <ArrowRight className="h-4 w-4" />}
             </GradientButton>
+
+            {GOOGLE_CLIENT_ID?.trim() && (
+              <>
+                <AuthDivider />
+                <GoogleSignInButton
+                  disabled={submitting}
+                  onSuccess={handleGoogleSuccess}
+                  label="signin_with"
+                />
+              </>
+            )}
           </form>
         </GlassCard>
 

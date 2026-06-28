@@ -1,0 +1,63 @@
+{
+  "title": "Paramètres",
+  "description": "Gérez votre compte, vos préférences d'apprentissage et l'expérience de l'application.",
+  "tabs": {
+    "account": "Compte",
+    "learning": "Apprentissage",
+    "notifications": "Notifications",
+    "appearance": "Apparence",
+    "help": "Aide"
+  },
+  "profile": {
+    "title": "Profil",
+    "firstName": "Prénom",
+    "lastName": "Nom",
+    "save": "Enregistrer le profil"
+  },
+  "password": {
+    "title": "Mot de passe",
+    "current": "Mot de passe actuel",
+    "new": "Nouveau mot de passe",
+    "confirm": "Confirmer le mot de passe",
+    "save": "Changer le mot de passe",
+    "mismatch": "Les mots de passe ne correspondent pas"
+  },
+  "emailPrefs": {
+    "title": "Préférences e-mail",
+    "hint": "Les e-mails transactionnels sont toujours envoyés.",
+    "reminders": "Rappels d'étude",
+    "digest": "Résumé hebdomadaire",
+    "productUpdates": "Mises à jour produit",
+    "marketing": "E-mails marketing",
+    "save": "Enregistrer les préférences"
+  },
+  "learning": {
+    "title": "Profil d'apprentissage",
+    "hint": "Utilisé pour adapter les leçons et le tutorat IA.",
+    "educationLevel": "Niveau d'éducation",
+    "country": "Pays",
+    "difficulty": "Difficulté par défaut",
+    "ageGroup": "Tranche d'âge (optionnel)",
+    "language": "Langue de tutorat (optionnel)",
+    "goals": "Objectifs d'apprentissage (optionnel)",
+    "save": "Enregistrer le profil",
+    "missing": "Le niveau d'éducation et le pays sont requis."
+  },
+  "appearance": {
+    "title": "Apparence et langue",
+    "hint": "Choisissez l'apparence et la langue de l'interface.",
+    "uiLanguage": "Langue de l'interface",
+    "theme": "Thème de couleur"
+  },
+  "help": {
+    "title": "Aide et visite guidée",
+    "hint": "Rejouez la visite guidée pour découvrir les fonctionnalités.",
+    "replay": "Rejouer la visite"
+  },
+  "messages": {
+    "profileUpdated": "Profil mis à jour",
+    "passwordChanged": "Mot de passe modifié",
+    "emailUpdated": "Préférences e-mail mises à jour",
+    "learningUpdated": "Profil d'apprentissage mis à jour"
+  }
+}

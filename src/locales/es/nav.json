@@ -1,0 +1,19 @@
+{
+  "student": {
+    "dashboard": "Panel",
+    "selfLearn": "Autoaprendizaje",
+    "lessons": "Lecciones",
+    "marketplace": "Marketplace",
+    "practice": "Práctica",
+    "chat": "Chat IA",
+    "analyse": "Informe de aprendizaje",
+    "milestones": "Hitos",
+    "achievements": "Logros",
+    "leaderboard": "Clasificación",
+    "subscription": "Suscripción",
+    "notifications": "Notificaciones",
+    "settings": "Configuración"
+  },
+  "teacher": { "marketplace": "Marketplace" },
+  "admin": { "marketplace": "Marketplace" }
+}

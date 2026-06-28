@@ -5,6 +5,7 @@ import { Medal, Trophy } from 'lucide-react';
 import { useAuth } from '../../../shared/context/AuthContext';
 import { GlassCard } from '../../../shared/components/GlassCard';
 import { formatNumber, getErrorMessage } from '../../../shared/utils/formatters';
+import { LeaderboardSkeleton } from '../../../shared/components/LoadingPrimitives';
 import { getLeaderboard } from '../services/student.services';
 
 const rankStyle = (rank) => {
@@ -47,7 +48,7 @@ const LeaderboardPanel = ({ compact = false }) => {
   const schoolTabLabel = organizationName ? organizationName : 'My school';
 
   return (
-    <GlassCard className="min-w-0 overflow-hidden p-6">
+    <GlassCard className="min-w-0 overflow-hidden p-4 sm:p-6">
       <div className="mb-4 flex items-center gap-2">
         <Trophy className="h-5 w-5 shrink-0 text-primary" />
         <h3 className="font-display text-sm font-semibold text-foreground">Leaderboard</h3>
@@ -76,7 +77,7 @@ const LeaderboardPanel = ({ compact = false }) => {
       )}
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">Loading ranks…</p>
+        <LeaderboardSkeleton compact={compact} />
       ) : entries.length ? (
         <ul className="space-y-2">
           {entries.map((entry) => (

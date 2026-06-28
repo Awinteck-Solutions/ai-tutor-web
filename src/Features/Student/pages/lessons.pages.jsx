@@ -172,11 +172,11 @@ const StudentLessonsPage = () => {
   ];
 
   const lessonCard = (l) => (
-    <Link key={l.id} to={`/student/lessons/${l.id}`} className="no-underline">
-      <GlassCard hover className="flex h-full flex-col p-6">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <BookOpen className="h-5 w-5 text-primary" />
-          <div className="flex flex-wrap justify-end gap-1">
+    <Link key={l.id} to={`/student/lessons/${l.id}`} className="block h-full no-underline">
+      <GlassCard hover className="flex h-full min-w-0 flex-col p-4 sm:p-6">
+        <div className="mb-3 flex items-start justify-between gap-2">
+          <BookOpen className="h-5 w-5 shrink-0 text-primary" />
+          <div className="flex min-w-0 flex-wrap justify-end gap-1">
             {(l.isPersonal || (isSchoolStudent && !l.isPersonal)) && (
               <AdesiaBadge status={l.isPersonal ? 'draft' : 'ready'}>
                 {l.isPersonal ? 'Self-learn' : organizationName}
@@ -190,7 +190,7 @@ const StudentLessonsPage = () => {
             </AdesiaBadge>
           </div>
         </div>
-        <h3 className="font-display font-semibold text-foreground">{l.title}</h3>
+        <h3 className="line-clamp-2 font-display font-semibold leading-snug text-foreground">{l.title}</h3>
         <p className="mt-2 line-clamp-2 flex-1 text-sm text-muted-foreground">
           {l.summary || 'Open to read lesson content, flashcards, and quizzes.'}
         </p>
@@ -206,11 +206,14 @@ const StudentLessonsPage = () => {
     <Link
       key={l.id}
       to={`/student/lessons/${l.id}`}
-      className="flex items-center justify-between gap-3 px-4 py-3 no-underline transition hover:bg-primary/5"
+      className="flex min-w-0 items-center gap-3 px-3 py-3.5 no-underline transition hover:bg-primary/5 sm:px-4 sm:py-3"
     >
-      <div className="min-w-0">
-        <p className="truncate font-medium text-foreground">{l.title}</p>
-        <p className="text-xs text-muted-foreground">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+        <BookOpen className="h-4 w-4 text-primary" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="line-clamp-2 font-medium leading-snug text-foreground">{l.title}</p>
+        <p className="mt-0.5 truncate text-xs text-muted-foreground">
           {progressLabel(l.progress)}
           {l.groupTitle ? ` · ${l.groupTitle}` : ''}
         </p>
@@ -315,7 +318,7 @@ const StudentLessonsPage = () => {
             school={grouped.school}
             grouped={grouped.grouped}
             ungrouped={grouped.ungrouped}
-            renderLesson={lessonCard}
+            renderGridLesson={lessonCard}
             renderListLesson={listRow}
             emptyMessage={emptyMessage}
           />

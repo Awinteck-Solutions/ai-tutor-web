@@ -7,7 +7,7 @@ import { GradientButton } from '../../../shared/components/GradientButton';
 import { getErrorMessage } from '../../../shared/utils/formatters';
 import { submitFlashcardReview } from '../services/student.services';
 
-const FlashcardStudy = ({ cards = [], onProgress, onComplete }) => {
+const FlashcardStudy = ({ cards = [], practiceOnly = false, onProgress, onComplete }) => {
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [submitting, setSubmitting] = useState(false);
@@ -29,20 +29,34 @@ const FlashcardStudy = ({ cards = [], onProgress, onComplete }) => {
         <p className="mt-2 text-sm text-muted-foreground">
           You reviewed {done} card{done === 1 ? '' : 's'} this round.
         </p>
+        {practiceOnly && (
+          <p className="mt-3 text-xs text-muted-foreground">Chat practice — not saved to your record</p>
+        )}
       </GlassCard>
     );
   }
 
   const handleReview = async (result) => {
+    if (practiceOnly) {
+      setDone((d) => d + 1);
+      onProgress?.(index + 1, cards.length);
+      setFlipped(false);
+      setIndex((i) => i + 1);
+      if (index + 1 >= cards.length) onComplete?.();
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const res = await submitFlashcardReview(card.flashcardId, result);
-      if (res?.xp?.awarded) {
-        notifications.show({
-          title: `+${res.xp.xpAmount} XP`,
-          message: 'Completed all flashcards in this lesson',
-          color: 'green',
-        });
+      if (!practiceOnly) {
+        const res = await submitFlashcardReview(card.flashcardId, result);
+        if (res?.xp?.awarded) {
+          notifications.show({
+            title: `+${res.xp.xpAmount} XP`,
+            message: 'Completed all flashcards in this lesson',
+            color: 'green',
+          });
+        }
       }
       setDone((d) => d + 1);
       onProgress?.(index + 1, cards.length);
@@ -66,7 +80,9 @@ const FlashcardStudy = ({ cards = [], onProgress, onComplete }) => {
           aria-busy="true"
         >
           <Loader size="md" type="dots" />
-          <p className="mt-3 text-sm font-medium text-foreground">Saving your review…</p>
+          <p className="mt-3 text-sm font-medium text-foreground">
+            {practiceOnly ? 'Next card…' : 'Saving your review…'}
+          </p>
         </div>
       )}
       <div className="mb-3 flex items-center justify-between text-xs text-muted-foreground">

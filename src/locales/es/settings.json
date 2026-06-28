@@ -1,0 +1,63 @@
+{
+  "title": "Configuración",
+  "description": "Administra tu cuenta, preferencias de aprendizaje y la experiencia de la app.",
+  "tabs": {
+    "account": "Cuenta",
+    "learning": "Aprendizaje",
+    "notifications": "Notificaciones",
+    "appearance": "Apariencia",
+    "help": "Ayuda"
+  },
+  "profile": {
+    "title": "Perfil",
+    "firstName": "Nombre",
+    "lastName": "Apellido",
+    "save": "Guardar perfil"
+  },
+  "password": {
+    "title": "Contraseña",
+    "current": "Contraseña actual",
+    "new": "Nueva contraseña",
+    "confirm": "Confirmar contraseña",
+    "save": "Cambiar contraseña",
+    "mismatch": "Las contraseñas no coinciden"
+  },
+  "emailPrefs": {
+    "title": "Preferencias de correo",
+    "hint": "Los correos transaccionales siempre se envían.",
+    "reminders": "Recordatorios de estudio",
+    "digest": "Resumen semanal",
+    "productUpdates": "Actualizaciones del producto",
+    "marketing": "Correos de marketing",
+    "save": "Guardar preferencias"
+  },
+  "learning": {
+    "title": "Perfil de aprendizaje",
+    "hint": "Se usa para adaptar lecciones y tutoría con IA.",
+    "educationLevel": "Nivel educativo",
+    "country": "País",
+    "difficulty": "Dificultad predeterminada",
+    "ageGroup": "Grupo de edad (opcional)",
+    "language": "Idioma de tutoría (opcional)",
+    "goals": "Objetivos de aprendizaje (opcional)",
+    "save": "Guardar perfil",
+    "missing": "El nivel educativo y el país son obligatorios."
+  },
+  "appearance": {
+    "title": "Apariencia e idioma",
+    "hint": "Elige cómo se ve Adesia y el idioma de la interfaz.",
+    "uiLanguage": "Idioma de la interfaz",
+    "theme": "Tema de color"
+  },
+  "help": {
+    "title": "Ayuda y recorrido",
+    "hint": "Repite el recorrido guiado para conocer las funciones.",
+    "replay": "Repetir recorrido"
+  },
+  "messages": {
+    "profileUpdated": "Perfil actualizado",
+    "passwordChanged": "Contraseña cambiada",
+    "emailUpdated": "Preferencias de correo actualizadas",
+    "learningUpdated": "Perfil de aprendizaje actualizado"
+  }
+}

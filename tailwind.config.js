@@ -44,6 +44,18 @@ export default {
         'fab-bounce': 'fab-bounce 2.4s ease-in-out infinite',
         'sparkle-twinkle': 'sparkle-twinkle 4s ease-in-out infinite',
         'fab-icon-in': 'fab-icon-in 0.45s ease-in-out',
+        'concept-flow': 'concept-flow 2.8s linear infinite',
+        'concept-node-in': 'concept-node-in 0.6s ease-out both',
+        'concept-glow': 'concept-glow 2.4s ease-in-out infinite',
+        'action-success': 'action-success 0.55s ease-out both',
+        'shimmer-slide': 'shimmer-slide 1.2s ease-in-out infinite',
+        'content-fade-in': 'content-fade-in 0.45s ease-out forwards',
+        'concept-edge-in': 'concept-edge-in 0.85s ease-out both',
+        'concept-callout-in': 'concept-callout-in 0.28s ease-out both',
+        'concept-layout': 'concept-layout 0.55s ease-out both',
+        'chat-orbit': 'chat-orbit 3s linear infinite',
+        'chat-glow': 'chat-glow 2.2s ease-in-out infinite',
+        'chat-wave': 'chat-wave 1.1s ease-in-out infinite',
       },
       keyframes: {
         float: {
@@ -62,6 +74,56 @@ export default {
         'fab-icon-in': {
           '0%': { opacity: '0', transform: 'scale(0.82) rotate(-10deg)' },
           '100%': { opacity: '1', transform: 'scale(1) rotate(0deg)' },
+        },
+        'concept-flow': {
+          '0%': { strokeDashoffset: '24' },
+          '100%': { strokeDashoffset: '0' },
+        },
+        'concept-node-in': {
+          '0%': { opacity: '0', transform: 'translateY(12px) scale(0.92)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        'concept-glow': {
+          '0%, 100%': { filter: 'drop-shadow(0 0 6px hsl(var(--primary) / 0.25))' },
+          '50%': { filter: 'drop-shadow(0 0 14px hsl(var(--primary) / 0.55))' },
+        },
+        'action-success': {
+          '0%': { transform: 'scale(0.85)', opacity: '0.6' },
+          '50%': { transform: 'scale(1.05)', opacity: '1' },
+          '100%': { transform: 'scale(1)', opacity: '1' },
+        },
+        'shimmer-slide': {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        'content-fade-in': {
+          '0%': { opacity: '0', transform: 'translateY(8px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
+        },
+        'concept-edge-in': {
+          '0%': { opacity: '0', strokeDashoffset: '48' },
+          '100%': { opacity: '1', strokeDashoffset: '0' },
+        },
+        'concept-callout-in': {
+          '0%': { opacity: '0', transform: 'translateY(6px) scale(0.96)' },
+          '100%': { opacity: '1', transform: 'translateY(0) scale(1)' },
+        },
+        'concept-layout': {
+          '0%': { opacity: '0.85' },
+          '100%': { opacity: '1' },
+        },
+        'chat-orbit': {
+          '0%': { transform: 'rotate(0deg) scale(1)' },
+          '50%': { transform: 'rotate(180deg) scale(1.04)' },
+          '100%': { transform: 'rotate(360deg) scale(1)' },
+        },
+        'chat-glow': {
+          '0%, 100%': { boxShadow: '0 0 0 0 hsl(var(--primary) / 0.15)' },
+          '50%': { boxShadow: '0 0 18px 2px hsl(var(--primary) / 0.22)' },
+        },
+        'chat-wave': {
+          '0%, 100%': { transform: 'scaleY(0.45)' },
+          '50%': { transform: 'scaleY(1)' },
         },
       },
       backgroundImage: {

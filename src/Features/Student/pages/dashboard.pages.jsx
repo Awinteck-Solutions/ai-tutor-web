@@ -34,6 +34,7 @@ import QuizCloseModal from '../components/QuizCloseModal';
 import LeaderboardPanel from '../components/LeaderboardPanel';
 import SetupWorkspaceBanner from '../components/SetupWorkspaceBanner';
 import StudentSourceLabel from '../components/StudentSourceLabel';
+import StudentLearningReportCard from '../components/StudentLearningReportCard';
 import { groupPracticeBySubject } from '../utils/groupPractice';
 import StatusBadge from '../../../shared/components/StatusBadge';
 import {
@@ -48,6 +49,9 @@ const usagePct = (used, limit) => {
   if (!limit) return 0;
   return Math.min(100, Math.round((used / limit) * 100));
 };
+
+const dashActionBtn = 'btn-outline flex min-h-9 flex-1 items-center justify-center gap-1.5 !px-3 !py-2 text-xs sm:min-h-0 sm:flex-initial sm:!px-2.5 sm:!py-1.5';
+const dashPrimaryBtn = 'btn-gradient flex min-h-10 w-full items-center justify-center gap-1.5 !px-4 !py-2.5 text-xs sm:min-h-0 sm:w-auto sm:!px-3 sm:!py-1.5';
 
 const quizStatusLabel = (q) => {
   if (q.status === 'completed') return 'Done';
@@ -167,18 +171,18 @@ const StudentDashboardPage = () => {
           description="Set up your workspace to start learning with Self-learn, Practice, and AI Chat."
         />
         <SetupWorkspaceBanner />
-        <div className="mt-8 grid gap-4 sm:grid-cols-3">
-          <GlassCard className="p-5 opacity-60">
+        <div className="mt-8 grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
+          <GlassCard className="p-4 opacity-60 sm:p-5">
             <Sparkles className="mb-3 h-6 w-6 text-primary" />
             <p className="font-display font-semibold text-foreground">Self-learn</p>
             <p className="mt-1 text-sm text-muted-foreground">Available after workspace setup.</p>
           </GlassCard>
-          <GlassCard className="p-5 opacity-60">
+          <GlassCard className="p-4 opacity-60 sm:p-5">
             <Target className="mb-3 h-6 w-6 text-primary" />
             <p className="font-display font-semibold text-foreground">Practice</p>
             <p className="mt-1 text-sm text-muted-foreground">Quizzes and flashcards live here.</p>
           </GlassCard>
-          <Link to="/student/subscription" className="glass-card-hover block p-5 no-underline">
+          <Link to="/student/subscription" className="glass-card-hover block p-4 no-underline sm:p-5">
             <CreditCard className="mb-3 h-6 w-6 text-primary" />
             <p className="font-display font-semibold text-foreground">Free plan</p>
             <p className="mt-1 text-sm text-muted-foreground">10 MB storage · 10 lessons/day.</p>
@@ -213,18 +217,18 @@ const StudentDashboardPage = () => {
           title={`Welcome, ${firstName}`}
           description="Start in Self-learn — upload materials or describe a topic to create your first lesson."
         />
-        <div className="mb-8 grid gap-4 sm:grid-cols-3">
-          <Link to="/student/self-learn" className="glass-card-hover block p-5 no-underline">
+        <div className="mb-8 grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
+          <Link to="/student/self-learn" className="glass-card-hover block p-4 no-underline sm:p-5">
             <Sparkles className="mb-3 h-6 w-6 text-primary" />
             <p className="font-display font-semibold text-foreground">Self-learn</p>
             <p className="mt-1 text-sm text-muted-foreground">Upload PDFs or create lessons from a prompt.</p>
           </Link>
-          <Link to="/student/practice" className="glass-card-hover block p-5 no-underline">
+          <Link to="/student/practice" className="glass-card-hover block p-4 no-underline sm:p-5">
             <Target className="mb-3 h-6 w-6 text-primary" />
             <p className="font-display font-semibold text-foreground">Practice</p>
             <p className="mt-1 text-sm text-muted-foreground">Quizzes and flashcards appear here after you generate them.</p>
           </Link>
-          <Link to="/student/subscription" className="glass-card-hover block p-5 no-underline">
+          <Link to="/student/subscription" className="glass-card-hover block p-4 no-underline sm:p-5">
             <CreditCard className="mb-3 h-6 w-6 text-primary" />
             <p className="font-display font-semibold text-foreground">Free plan</p>
             <p className="mt-1 text-sm text-muted-foreground">10 MB storage · 10 lessons/day. Upgrades coming soon.</p>
@@ -257,14 +261,14 @@ const StudentDashboardPage = () => {
         gradientWord={firstName}
         description="Pick up where you left off — Self-learn, Practice, and AI Chat are one click away."
         action={(
-          <div className="flex flex-wrap gap-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row">
             <Link to="/student/self-learn" className="no-underline">
-              <GradientButton type="button" className="!px-3 !py-2">
+              <GradientButton type="button" className="w-full !px-3 !py-2 sm:w-auto">
                 <Sparkles className="h-4 w-4" />
                 Self-learn
               </GradientButton>
             </Link>
-            <Link to="/student/practice" className="btn-outline inline-flex items-center gap-2 !px-3 !py-2 text-sm no-underline">
+            <Link to="/student/practice" className="btn-outline inline-flex w-full items-center justify-center gap-2 !px-3 !py-2 text-sm no-underline sm:w-auto">
               <Target className="h-4 w-4" />
               Practice
             </Link>
@@ -272,30 +276,30 @@ const StudentDashboardPage = () => {
         )}
       />
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-3">
-        <Link to="/student/self-learn" className="glass-card flex items-start gap-4 p-5 no-underline transition hover:border-primary/40">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
-            <Sparkles className="h-5 w-5" />
+      <div className="mb-8 grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-4">
+        <Link to="/student/self-learn" className="glass-card flex min-w-0 items-start gap-3 p-4 no-underline transition hover:border-primary/40 sm:gap-4 sm:p-5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary sm:h-10 sm:w-10">
+            <Sparkles className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="font-display text-sm font-semibold text-foreground">Create & upload</p>
             <p className="mt-1 text-xs text-muted-foreground">Build lessons from materials or prompts.</p>
           </div>
         </Link>
-        <Link to="/student/practice" className="glass-card flex items-start gap-4 p-5 no-underline transition hover:border-primary/40">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
-            <Target className="h-5 w-5" />
+        <Link to="/student/practice" className="glass-card flex min-w-0 items-start gap-3 p-4 no-underline transition hover:border-primary/40 sm:gap-4 sm:p-5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary sm:h-10 sm:w-10">
+            <Target className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="font-display text-sm font-semibold text-foreground">Practice</p>
             <p className="mt-1 text-xs text-muted-foreground">Quizzes, flashcards, and saved progress.</p>
           </div>
         </Link>
-        <Link to="/student/chat" className="glass-card flex items-start gap-4 p-5 no-underline transition hover:border-primary/40">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary">
-            <MessageSquare className="h-5 w-5" />
+        <Link to="/student/chat" className="glass-card flex min-w-0 items-start gap-3 p-4 no-underline transition hover:border-primary/40 sm:gap-4 sm:p-5">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/15 text-primary sm:h-10 sm:w-10">
+            <MessageSquare className="h-4 w-4 sm:h-5 sm:w-5" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="font-display text-sm font-semibold text-foreground">AI Chat</p>
             <p className="mt-1 text-xs text-muted-foreground">Ask questions about your lessons.</p>
           </div>
@@ -303,7 +307,7 @@ const StudentDashboardPage = () => {
       </div>
 
       {subscription?.applyFreeLimits && subscription.limits && (
-        <GlassCard className="mb-8 p-6">
+        <GlassCard className="mb-8 p-4 sm:p-6">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               <CreditCard className="h-4 w-4 text-primary" />
@@ -313,7 +317,7 @@ const StudentDashboardPage = () => {
               View plans
             </Link>
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
             <div>
               <div className="mb-1 flex justify-between text-xs text-muted-foreground">
                 <span>Storage</span>
@@ -346,7 +350,7 @@ const StudentDashboardPage = () => {
         </GlassCard>
       )}
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="mb-8 grid grid-cols-2 gap-2.5 sm:gap-4 sm:grid-cols-2 xl:grid-cols-5">
         <StatCard icon={Zap} label="Total XP" value={formatNumber(data.totalXp)} highlight />
         {isSchoolStudent && (
           <StatCard
@@ -360,7 +364,7 @@ const StudentDashboardPage = () => {
         <StatCard icon={Brain} label="Quiz avg" value={`${Math.round(data.averageQuizScore)}%`} />
       </div>
 
-      <div className="mb-8 grid gap-4 sm:grid-cols-2 md:grid-cols-4">
+      <div className="mb-8 grid grid-cols-2 gap-2.5 sm:gap-4 md:grid-cols-4">
         <StatCard icon={Layers} label="Lessons done" value={formatNumber(data.lessonsCompleted)} />
         <StatCard icon={Timer} label="Study time" value={`${formatNumber(data.totalStudyTimeMinutes)}m`} />
         <StatCard icon={Sparkles} label="Due cards" value={formatNumber(data.dueFlashcards)} />
@@ -369,29 +373,37 @@ const StudentDashboardPage = () => {
 
       <div className="mb-8 grid min-w-0 gap-6 lg:grid-cols-3">
         <div className="min-w-0 lg:col-span-2">
-          <div className="grid min-w-0 gap-6 md:grid-cols-2">
-            <GlassCard className="min-w-0 overflow-hidden p-6">
+          {user?.id && (
+            <StudentLearningReportCard
+              organizationId={organizationId}
+              studentId={user.id}
+              weakTopics={data.weakTopics ?? []}
+            />
+          )}
+
+          <div className="mt-6 grid min-w-0 gap-6 md:grid-cols-2">
+            <GlassCard className="min-w-0 overflow-hidden p-4 sm:p-6">
               <div className="mb-4 flex items-center justify-between gap-2">
                 <h3 className="font-display text-sm font-semibold text-foreground">Continue learning</h3>
                 <Link to="/student/lessons" className="shrink-0 text-xs text-primary hover:underline">View all</Link>
               </div>
               {continueList.length ? (
-                <ul className="space-y-3">
+                <ul className="space-y-2 sm:space-y-3">
                   {continueList.slice(0, 4).map((item) => (
                     <li key={item.lessonId} className="min-w-0">
                       <Link
                         to={`/student/lessons/${item.lessonId}`}
-                        className="flex min-w-0 items-center gap-3 rounded-xl border border-border/50 bg-muted/30 px-4 py-3 no-underline transition hover:border-primary/30"
+                        className="flex min-w-0 items-center gap-3 rounded-xl border border-border/50 bg-muted/30 px-3 py-3.5 no-underline transition hover:border-primary/30 sm:px-4 sm:py-3"
                       >
                         <div className="min-w-0 flex-1">
-                          <p className="truncate font-medium text-foreground">{item.title}</p>
+                          <p className="line-clamp-2 font-medium leading-snug text-foreground">{item.title}</p>
                           <StudentSourceLabel
                             isPersonal={item.isPersonal}
                             organizationName={organizationName}
                             isSchoolStudent={isSchoolStudent}
                             className="mt-0.5 block truncate"
                           />
-                          <p className="truncate text-xs text-muted-foreground">
+                          <p className="mt-0.5 text-xs text-muted-foreground">
                             {item.progressPercent > 0
                               ? `${Math.round(item.progressPercent)}% complete`
                               : 'Opened — continue reading'}
@@ -407,19 +419,19 @@ const StudentDashboardPage = () => {
               )}
             </GlassCard>
 
-            <GlassCard className="min-w-0 overflow-hidden p-6">
+            <GlassCard className="min-w-0 overflow-hidden p-4 sm:p-6">
               <div className="mb-4 flex items-center justify-between gap-2">
                 <h3 className="font-display text-sm font-semibold text-foreground">Recommended</h3>
               </div>
               {(data.recommendedLessons?.length ?? 0) ? (
-                <ul className="space-y-3">
+                <ul className="space-y-2 sm:space-y-3">
                   {data.recommendedLessons.slice(0, 4).map((lesson) => (
                     <li key={lesson.id} className="min-w-0">
                       <Link
                         to={`/student/lessons/${lesson.id}`}
-                        className="flex min-w-0 items-center gap-3 rounded-xl border border-border/50 bg-muted/30 px-4 py-3 no-underline transition hover:border-primary/30"
+                        className="flex min-w-0 items-center gap-3 rounded-xl border border-border/50 bg-muted/30 px-3 py-3.5 no-underline transition hover:border-primary/30 sm:px-4 sm:py-3"
                       >
-                        <p className="min-w-0 flex-1 truncate font-medium text-foreground">{lesson.title}</p>
+                        <p className="line-clamp-2 min-w-0 flex-1 font-medium leading-snug text-foreground">{lesson.title}</p>
                         <ChevronRight className="h-4 w-4 shrink-0 text-primary" />
                       </Link>
                     </li>
@@ -432,7 +444,7 @@ const StudentDashboardPage = () => {
           </div>
 
           {(data.weakTopics?.length ?? 0) > 0 && (
-            <GlassCard className="mt-6 min-w-0 overflow-hidden p-6">
+            <GlassCard className="mt-6 min-w-0 overflow-hidden p-4 sm:p-6">
               <h3 className="mb-3 font-display text-sm font-semibold text-foreground">Focus areas</h3>
               <div className="flex flex-wrap gap-2">
                 {data.weakTopics.map((topic) => (
@@ -454,8 +466,8 @@ const StudentDashboardPage = () => {
       </div>
 
       {recentMaterials.length > 0 && (
-        <GlassCard className="mb-8 p-6">
-          <div className="mb-4 flex items-center justify-between">
+        <GlassCard className="mb-8 p-4 sm:p-6">
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
             <h3 className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
               <FileText className="h-4 w-4 text-primary" />
               Your materials
@@ -464,22 +476,22 @@ const StudentDashboardPage = () => {
               Manage uploads
             </Link>
           </div>
-          <ul className="space-y-3">
+          <ul className="space-y-2 sm:space-y-3">
             {recentMaterials.map((m) => (
               <li
                 key={m.id}
-                className="flex items-center justify-between gap-3 rounded-xl border border-border/50 bg-muted/30 px-4 py-3"
+                className="flex flex-col gap-2.5 rounded-xl border border-border/50 bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-3"
               >
                 <div className="min-w-0">
-                  <p className="truncate font-medium text-foreground">{m.title}</p>
-                  <p className="text-xs text-muted-foreground">{m.type ?? 'Material'}</p>
+                  <p className="line-clamp-2 font-medium leading-snug text-foreground">{m.title}</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">{m.type ?? 'Material'}</p>
                 </div>
                 <div className="flex shrink-0 items-center gap-2">
                   {m.processingStatus && <StatusBadge status={m.processingStatus} />}
                   <Link
                     to={`/student/materials/${m.id}/preview`}
                     state={{ returnTo: '/student/dashboard' }}
-                    className="btn-outline !px-2 !py-1 text-xs no-underline"
+                    className={`${dashActionBtn} no-underline`}
                   >
                     Preview
                   </Link>
@@ -491,7 +503,7 @@ const StudentDashboardPage = () => {
       )}
 
       <div className="my-8">
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 font-display text-sm font-semibold text-foreground">
             <Sparkles className="h-4 w-4 text-primary" />
             Practice by subject
@@ -502,23 +514,23 @@ const StudentDashboardPage = () => {
         </div>
 
         {grouped.length ? (
-          <div className="space-y-6">
+          <div className="space-y-3 sm:space-y-4">
             {grouped.map((subject) => {
               const key = subjectKey(subject);
               const isOpen = expandedSubjects[key] === true;
               return (
-              <GlassCard key={key} className="overflow-hidden p-0">
+              <GlassCard key={key} className="min-w-0 overflow-hidden p-0">
                 <button
                   type="button"
                   onClick={() => toggleSubject(key)}
-                  className="flex w-full items-center justify-between gap-3 p-6 text-left transition hover:bg-muted/20"
+                  className="flex w-full items-center justify-between gap-3 p-4 text-left transition hover:bg-muted/20 sm:p-5"
                   aria-expanded={isOpen}
                 >
                   <div className="flex min-w-0 items-center gap-2">
                     <ChevronDown
                       className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
                     />
-                    <h3 className="font-display text-base font-semibold text-foreground">
+                    <h3 className="line-clamp-2 font-display text-sm font-semibold leading-snug text-foreground sm:text-base">
                       {subject.subjectName}
                     </h3>
                   </div>
@@ -529,7 +541,7 @@ const StudentDashboardPage = () => {
                   </span>
                 </button>
                 <Collapse in={isOpen}>
-                <ul className="space-y-4 border-t border-border/40 px-6 pb-6 pt-4">
+                <ul className="space-y-3 border-t border-border/40 px-4 pb-4 pt-3 sm:space-y-4 sm:px-5 sm:pb-5 sm:pt-4">
                   {subject.lessons.map((lesson) => {
                     const pendingFc = lesson.flashcards.filter((f) => f.status === 'pending').length;
                     const pendingQuiz = lesson.quizzes.find(
@@ -538,17 +550,17 @@ const StudentDashboardPage = () => {
                     return (
                       <li
                         key={lesson.lessonId}
-                        className="rounded-xl border border-border/50 bg-muted/20 p-4"
+                        className="rounded-xl border border-border/50 bg-muted/20 p-3 sm:p-4"
                       >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="flex flex-col gap-3">
                           <div className="min-w-0">
                             <Link
                               to={`/student/lessons/${lesson.lessonId}`}
-                              className="font-medium text-foreground hover:text-primary"
+                              className="line-clamp-2 font-medium leading-snug text-foreground hover:text-primary"
                             >
                               {lesson.lessonTitle}
                             </Link>
-                            <div className="mt-2 flex flex-wrap gap-2">
+                            <div className="mt-2 flex flex-wrap gap-1.5 sm:gap-2">
                               {lesson.quizzes.map((q) => (
                                 <AdesiaBadge key={q.quizId} status={quizStatusBadge(q)}>
                                   Quiz: {quizStatusLabel(q)}
@@ -563,30 +575,34 @@ const StudentDashboardPage = () => {
                               )}
                             </div>
                           </div>
-                          <div className="flex shrink-0 flex-wrap gap-2">
-                            {pendingFc > 0 && (
-                              <button
-                                type="button"
-                                className="btn-outline !px-2 !py-1 text-xs"
-                                onClick={() => setActiveFlashcards(
-                                  lesson.flashcards.filter((f) => f.status === 'pending'),
-                                )}
-                              >
-                                Review cards
-                              </button>
-                            )}
-                            {pendingQuiz && (
-                              <button
-                                type="button"
-                                className="btn-outline !px-2 !py-1 text-xs"
-                                onClick={() => {
-                                  setActiveQuiz({ ...pendingQuiz, retake: false });
-                                }}
-                              >
-                                {pendingQuiz.status === 'in_progress' ? 'Continue quiz' : 'Take quiz'}
-                              </button>
-                            )}
-                          </div>
+                          {(pendingFc > 0 || pendingQuiz) && (
+                            <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                              {pendingQuiz && (
+                                <button
+                                  type="button"
+                                  className={dashPrimaryBtn}
+                                  onClick={() => {
+                                    setActiveQuiz({ ...pendingQuiz, retake: false });
+                                  }}
+                                >
+                                  <Play className="h-3.5 w-3.5" />
+                                  {pendingQuiz.status === 'in_progress' ? 'Continue quiz' : 'Take quiz'}
+                                </button>
+                              )}
+                              {pendingFc > 0 && (
+                                <button
+                                  type="button"
+                                  className={dashActionBtn}
+                                  onClick={() => setActiveFlashcards(
+                                    lesson.flashcards.filter((f) => f.status === 'pending'),
+                                  )}
+                                >
+                                  <Sparkles className="h-3.5 w-3.5" />
+                                  Review cards
+                                </button>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </li>
                     );
@@ -598,7 +614,7 @@ const StudentDashboardPage = () => {
             })}
           </div>
         ) : (
-          <GlassCard className="p-8 text-center">
+          <GlassCard className="p-6 text-center sm:p-8">
             <p className="text-sm text-muted-foreground">No quizzes or flashcards yet.</p>
             <Link to="/student/lessons" className="mt-3 inline-block text-sm text-primary hover:underline">
               Browse lessons

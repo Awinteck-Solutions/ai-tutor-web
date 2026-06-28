@@ -10,8 +10,10 @@ const StudentSelfAnalysePage = () => {
     <AnalyseStudentPage
       basePath="/student"
       backLabel="Back to dashboard"
+      backTo="/student/dashboard"
       studentIdOverride={user.id}
       organizationIdOverride={organizationId}
+      studentMode
     />
   );
 };

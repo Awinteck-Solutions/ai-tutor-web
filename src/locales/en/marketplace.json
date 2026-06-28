@@ -1,0 +1,71 @@
+{
+  "title": "Marketplace",
+  "description": "Discover company-curated lessons ready to import into your workspace.",
+  "searchPlaceholder": "Search lessons, subjects, tags…",
+  "tabs": {
+    "browse": "Browse catalog",
+    "library": "My library"
+  },
+  "sort": {
+    "label": "Sort by",
+    "newest": "Newest",
+    "popular": "Most downloaded",
+    "views": "Most viewed"
+  },
+  "filters": {
+    "search": "Search",
+    "refine": "Refine results",
+    "display": "Sort & display",
+    "clear": "Clear all filters",
+    "academicLevel": "Academic level",
+    "pricing": "Pricing",
+    "subject": "Subject",
+    "featuredOnly": "Featured only"
+  },
+  "card": {
+    "flashcards": "{{count}} flashcards",
+    "quiz": "{{count}} quiz questions",
+    "free": "Free",
+    "imported": "Already imported"
+  },
+  "detail": {
+    "overview": "Overview",
+    "objectives": "Learning objectives",
+    "preview": "Content preview",
+    "stats": "Engagement",
+    "importCta": "Import to my workspace",
+    "purchaseCta": "Unlock & import",
+    "importAgain": "Open imported lesson",
+    "purchaseFirst": "Purchase required for paid resources"
+  },
+  "messages": {
+    "importSuccess": "Lesson imported successfully",
+    "importExists": "You already imported this lesson",
+    "purchaseSuccess": "Purchase complete — you can now import",
+    "loadError": "Could not load marketplace"
+  },
+  "emptyFiltered": "No lessons match your filters. Try adjusting search or filters.",
+  "emptyComingSoon": {
+    "title": "Coming soon",
+    "description": "Marketplace is where you'll discover ready-made lessons curated by your organization—complete with summaries, flashcards, and quizzes—and import them into your workspace in one click. We're preparing the first catalog now."
+  },
+  "library": {
+    "title": "Purchased & imported",
+    "description": "Lessons you have unlocked or added to your workspace.",
+    "emptyTitle": "Your library is empty",
+    "filters": {
+      "all": "All",
+      "imported": "Imported",
+      "purchased": "Purchased"
+    },
+    "imported": "Imported",
+    "purchased": "Purchased",
+    "purchasedImported": "Purchased & imported",
+    "purchasedOn": "Purchased {{date}}",
+    "importedOn": "Imported {{date}}",
+    "openLesson": "Open",
+    "importNow": "Import now",
+    "viewListing": "View listing",
+    "empty": "When the catalog launches, lessons you import or purchase will appear here. Browse Marketplace to add curated content to your workspace."
+  }
+}

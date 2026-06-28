@@ -6,6 +6,7 @@ import { GlassCard } from '../../../shared/components/GlassCard';
 import { PageLoader } from '../../../shared/components/PageLoader';
 import { formatDateTime, getErrorMessage } from '../../../shared/utils/formatters';
 import { listPlatformContent, listPlatformOrganizations } from '../services/platform.services';
+import { resolvePlatformPortalLink } from '../platform.paths';
 
 const CONTENT_TYPES = [
   { value: 'lessons', label: 'Lessons' },
@@ -86,7 +87,14 @@ const ContentPage = () => {
                   <td className="px-4 py-3 text-muted-foreground">{formatDateTime(item.createdAt)}</td>
                   <td className="px-4 py-3">
                     {item.previewPath ? (
-                      <Link to={item.previewPath} className="text-primary hover:underline" target="_blank" rel="noreferrer">Open preview</Link>
+                      <Link
+                        to={resolvePlatformPortalLink(item.previewPath, {
+                          organizationId: item.organizationId,
+                        })}
+                        className="text-primary hover:underline"
+                      >
+                        Open preview
+                      </Link>
                     ) : (
                       <span className="text-muted-foreground">—</span>
                     )}

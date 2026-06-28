@@ -82,6 +82,11 @@
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
     }
+    .content-fade-in {
+      animation: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
   }
 
   body {
@@ -132,6 +137,36 @@
 
   .input-adesia {
     @apply w-full rounded-xl border border-border/70 bg-card/60 px-4 py-3 text-sm text-foreground placeholder:text-muted-foreground backdrop-blur-sm transition-colors focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/25;
+  }
+
+  .light .input-adesia,
+  .edu .input-adesia {
+    @apply border-border bg-card backdrop-blur-none;
+  }
+
+  .input-adornment-icon {
+    @apply pointer-events-none absolute left-3 top-1/2 z-[1] h-[18px] w-[18px] -translate-y-1/2 shrink-0;
+    color: hsl(var(--muted-foreground));
+    stroke-width: 2.25px;
+  }
+
+  .light .input-adornment-icon,
+  .edu .input-adornment-icon {
+    color: hsl(var(--foreground) / 0.58);
+  }
+
+  .input-adornment-toggle {
+    @apply absolute right-3 top-1/2 z-[1] -translate-y-1/2 transition-colors;
+    color: hsl(var(--muted-foreground));
+  }
+
+  .light .input-adornment-toggle,
+  .edu .input-adornment-toggle {
+    color: hsl(var(--foreground) / 0.54);
+  }
+
+  .input-adornment-toggle:hover {
+    color: hsl(var(--foreground));
   }
 
   .nav-section-title {
@@ -341,4 +376,58 @@
 :root:not(.dark):not(.edu) [class*='border-primary/25'],
 :root:not(.dark):not(.edu) [class*='border-primary/30'] {
   border-color: hsl(48 96% 53% / 0.22) !important;
+}
+
+/* Chat user bubbles — soft amber tint in light & dark themes */
+.light .chat-user-bubble {
+  background: hsl(48 100% 91%) !important;
+  color: hsl(32 70% 24%) !important;
+  box-shadow: none;
+}
+
+.dark .chat-user-bubble {
+  background: hsl(43 45% 20%) !important;
+  color: hsl(48 85% 82%) !important;
+  box-shadow: none;
+}
+
+.edu .chat-user-bubble {
+  background: hsl(var(--primary)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+.light .chat-send-btn:not(:disabled) {
+  background: var(--gradient-cta) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+.light .chat-practice-card {
+  border-color: hsl(var(--border) / 0.85) !important;
+  background: hsl(var(--card)) !important;
+  background-image: none !important;
+}
+
+.light .chat-practice-card .chat-practice-icon {
+  background-color: hsl(48 96% 53% / 0.12) !important;
+  color: hsl(var(--primary)) !important;
+}
+
+.light .chat-practice-try-btn {
+  background: var(--gradient-cta) !important;
+  color: hsl(var(--primary-foreground)) !important;
+}
+
+.content-fade-in {
+  animation: content-fade-in 0.45s ease-out forwards;
+}
+
+@keyframes content-fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }

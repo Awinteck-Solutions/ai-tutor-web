@@ -70,21 +70,21 @@ const MilestoneNode = ({ milestone, isLast }) => {
   const complete = milestone.complete;
 
   return (
-    <li className="relative flex gap-6 pb-10">
+    <li className="relative flex gap-3 pb-8 sm:gap-6 sm:pb-10">
       {!isLast && (
         <span
-          className={`absolute left-[1.65rem] top-14 h-[calc(100%-2rem)] w-0.5 ${
+          className={`absolute left-[1.15rem] top-12 h-[calc(100%-1.5rem)] w-0.5 sm:left-[1.65rem] sm:top-14 sm:h-[calc(100%-2rem)] ${
             complete ? 'bg-primary/40' : 'bg-border'
           }`}
           aria-hidden
         />
       )}
       <div
-        className={`relative z-10 flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-gradient-to-br ${style.ring} shadow-lg ${style.glow} ${
+        className={`relative z-10 flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br sm:h-14 sm:w-14 ${style.ring} shadow-lg ${style.glow} ${
           complete ? '' : 'opacity-60 grayscale-[0.35]'
         }`}
       >
-        <Icon className="h-6 w-6 text-white drop-shadow" />
+        <Icon className="h-5 w-5 text-white drop-shadow sm:h-6 sm:w-6" />
         {complete && (
           <span className="absolute -right-0.5 -top-0.5 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">
             ✓
@@ -92,7 +92,7 @@ const MilestoneNode = ({ milestone, isLast }) => {
         )}
       </div>
       <GlassCard
-        className={`min-w-0 flex-1 p-5 transition ${
+        className={`min-w-0 flex-1 p-4 transition sm:p-5 ${
           complete ? 'border-primary/25 bg-primary/5' : ''
         }`}
       >
@@ -106,8 +106,8 @@ const MilestoneNode = ({ milestone, isLast }) => {
             </span>
           )}
         </div>
-        <h3 className="font-display text-lg font-semibold text-foreground">{milestone.title}</h3>
-        <p className="mt-1 text-sm text-muted-foreground">{milestone.description}</p>
+        <h3 className="line-clamp-2 font-display text-base font-semibold leading-snug text-foreground sm:text-lg">{milestone.title}</h3>
+        <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{milestone.description}</p>
         <div className="mt-4">
           <div className="mb-1 flex justify-between text-xs text-muted-foreground">
             <span>
@@ -168,11 +168,11 @@ const StudentMilestonesPage = () => {
       />
 
       {summary && (
-        <div className="mb-8 overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-violet-500/10 p-6 md:p-8">
-          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-            <div>
+        <div className="mb-8 overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-br from-primary/10 via-background to-violet-500/10 p-4 sm:p-6 md:p-8">
+          <div className="flex flex-col gap-5 sm:gap-6 md:flex-row md:items-center md:justify-between">
+            <div className="min-w-0">
               <p className="text-sm font-medium uppercase tracking-wider text-primary">Overall progress</p>
-              <p className="mt-1 font-display text-4xl font-bold text-foreground md:text-5xl">
+              <p className="mt-1 font-display text-3xl font-bold text-foreground sm:text-4xl md:text-5xl">
                 {summary.overallPercent}
                 <span className="text-2xl text-muted-foreground">%</span>
               </p>

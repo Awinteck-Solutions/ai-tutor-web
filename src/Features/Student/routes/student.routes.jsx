@@ -13,6 +13,8 @@ import StudentSelfLearnPage from '../pages/selfLearn.pages';
 import StudentMilestonesPage from '../pages/milestones.pages';
 import StudentChatPage from '../pages/chat.pages';
 import StudentSelfAnalysePage from '../pages/analyse.pages';
+import MarketplacePage from '../../Marketplace/pages/marketplace.pages';
+import MarketplaceDetailPage from '../../Marketplace/pages/marketplaceDetail.pages';
 
 export const studentRoutes = (
   <>
@@ -30,6 +32,16 @@ export const studentRoutes = (
     <Route path="notifications" element={<StudentNotificationsPage />} />
     <Route path="subscription" element={<StudentSubscriptionPage />} />
     <Route path="analyse" element={<StudentSelfAnalysePage />} />
+    <Route path="marketplace" element={<MarketplacePage portalBase="/student" getLessonPath={(id) => `/student/lessons/${id}`} />} />
+    <Route
+      path="marketplace/:id"
+      element={
+        <MarketplaceDetailPage
+          portalBase="/student"
+          getLessonPath={(lessonId) => `/student/lessons/${lessonId}`}
+        />
+      }
+    />
     <Route path="settings" element={<StudentSettingsPage />} />
   </>
 );

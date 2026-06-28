@@ -106,7 +106,7 @@ const StudentLessonDetailPage = () => {
         title={lesson.title}
         description={lesson.summary || 'Read the lesson, then practice quizzes and flashcards.'}
         action={!isComplete && (
-          <GradientButton type="button" onClick={handleComplete} disabled={completing} className="!px-3 !py-2">
+          <GradientButton type="button" onClick={handleComplete} disabled={completing} className="w-full !px-3 !py-2 sm:w-auto">
             <CheckCircle2 className="h-4 w-4" />
             {completing ? 'Saving…' : 'Mark complete'}
           </GradientButton>
@@ -137,7 +137,7 @@ const StudentLessonDetailPage = () => {
         </Tabs.List>
 
         <Tabs.Panel value="content">
-          <GlassCard className="p-6">
+          <GlassCard className="p-4 sm:p-6">
             {lesson.content ? (
               <MarkdownContent content={lesson.content} />
             ) : (
@@ -151,7 +151,7 @@ const StudentLessonDetailPage = () => {
         </Tabs.Panel>
 
         <Tabs.Panel value="practice">
-          <GlassCard className="space-y-6 p-6">
+          <GlassCard className="space-y-5 p-4 sm:space-y-6 sm:p-6">
             <p className="text-sm text-muted-foreground">
               Quizzes and flashcards use interactive practice mode — flip cards, answer questions, and track progress.
             </p>
@@ -166,11 +166,11 @@ const StudentLessonDetailPage = () => {
                   {practiceSummary.quizzes.map((q) => (
                     <li
                       key={q.quizId}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-border/50 bg-muted/30 px-4 py-3"
+                      className="flex flex-col gap-2 rounded-xl border border-border/50 bg-muted/30 p-3 sm:flex-row sm:items-center sm:justify-between sm:gap-3 sm:px-4 sm:py-3"
                     >
-                      <div>
-                        <p className="font-medium text-foreground">{q.title || 'Lesson quiz'}</p>
-                        <p className="text-xs text-muted-foreground">
+                      <div className="min-w-0">
+                        <p className="line-clamp-2 font-medium leading-snug text-foreground">{q.title || 'Lesson quiz'}</p>
+                        <p className="mt-0.5 text-xs text-muted-foreground">
                           {q.status === 'completed'
                             ? `Completed · ${Math.round(q.score ?? 0)}%`
                             : q.status === 'in_progress'
@@ -200,8 +200,8 @@ const StudentLessonDetailPage = () => {
               </div>
             )}
 
-            <Link to={practiceLink} className="no-underline">
-              <GradientButton type="button" className="!px-4 !py-2">
+            <Link to={practiceLink} className="block no-underline">
+              <GradientButton type="button" className="w-full !px-4 !py-2 sm:w-auto">
                 Open in Practice
               </GradientButton>
             </Link>

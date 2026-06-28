@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Breadcrumbs, Anchor, SimpleGrid, Skeleton, Tabs } from '@mantine/core';
 import { Link, useParams } from 'react-router-dom';
 import { notifications } from '@mantine/notifications';
-import { ChevronRight } from 'lucide-react';
+import { Brain, ChevronRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { PageHeader } from '../components/PageShell';
 import { PageHeaderSkeleton } from '../components/TableSkeleton';
@@ -103,12 +103,13 @@ const StudentDetailPage = ({ basePath = '/teacher' }) => {
         description={student.email}
       />
 
-      <div className="mb-4">
+      <div className="mb-4 flex flex-wrap gap-2">
         <Link
           to={`${basePath}/students/${id}/analyse`}
-          className="inline-flex rounded-xl bg-primary/10 px-4 py-2 text-sm font-medium text-primary hover:bg-primary/15"
+          className="btn-gradient inline-flex w-full items-center justify-center gap-2 !px-4 !py-2 text-sm no-underline sm:w-auto"
         >
-          Analyse student →
+          <Brain className="h-4 w-4" />
+          Analyse learning report
         </Link>
       </div>
 

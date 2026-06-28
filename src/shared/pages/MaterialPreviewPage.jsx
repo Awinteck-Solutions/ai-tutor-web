@@ -6,9 +6,11 @@ import {
   ArrowLeft, ChevronRight, ExternalLink, FileText,
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
+import { usePreviewOrganizationId } from '../hooks/usePreviewOrganizationId';
+import { platformContentPath } from '../../Features/Platform/platform.paths';
 import { PageHeader } from '../components/PageShell';
 import { EmptyOrgHint } from '../components/PageLoader';
-import { PageHeaderSkeleton } from '../components/TableSkeleton';
+import { ContentFadeIn, MaterialPreviewSkeleton } from '../components/LoadingPrimitives';
 import StatusBadge from '../components/StatusBadge';
 import MarkdownContent from '../components/MarkdownContent';
 import { formatDateTime, getErrorMessage } from '../utils/formatters';
@@ -28,12 +30,14 @@ const getYoutubeEmbedUrl = (url) => {
 const MaterialPreviewPage = () => {
   const { materialId } = useParams();
   const location = useLocation();
-  const { organizationId, user } = useAuth();
+  const organizationId = usePreviewOrganizationId();
+  const { user } = useAuth();
   const [material, setMaterial] = useState(null);
   const [loading, setLoading] = useState(true);
 
   const isStudent = location.pathname.startsWith('/student');
   const isTeacher = location.pathname.startsWith('/teacher');
+  const isPlatform = location.pathname.startsWith('/platform');
 
   const returnTo = location.state?.returnTo ?? (isStudent ? '/student/dashboard' : null);
   const returnLabel = returnTo?.startsWith('/student/lessons/')
@@ -44,11 +48,13 @@ const MaterialPreviewPage = () => {
         ? 'Dashboard'
         : 'Back';
 
-  const materialsPath = isStudent
-    ? (returnTo?.startsWith('/student/lessons/') ? returnTo : '/student/self-learn')
-    : isTeacher
-      ? '/teacher/materials'
-      : '/admin/materials';
+  const materialsPath = isPlatform
+    ? platformContentPath({ organizationId, type: 'materials' })
+    : isStudent
+      ? (returnTo?.startsWith('/student/lessons/') ? returnTo : '/student/self-learn')
+      : isTeacher
+        ? '/teacher/materials'
+        : '/admin/materials';
 
   const isOwnUpload = material?.uploadedBy && user?.id && material.uploadedBy === user.id;
 
@@ -107,20 +113,20 @@ const MaterialPreviewPage = () => {
       {!isStudent || !returnTo || returnTo === '/student/dashboard' ? backLink : null}
 
       {loading ? (
-        <PageHeaderSkeleton />
+        <MaterialPreviewSkeleton />
       ) : (
+        <ContentFadeIn>
         <PageHeader
           title={material?.title || 'Material'}
           gradientWord={isStudent ? undefined : 'preview'}
           description="Review your upload, summary, and embedded preview."
         />
-      )}
 
-      {isStudent && !loading && material && isOwnUpload && (
+      {isStudent && material && isOwnUpload && (
         <p className="mb-4 text-xs text-muted-foreground">Your upload · Self-learn</p>
       )}
 
-      {!loading && material && (
+      {material && (
         <div className="min-w-0 space-y-6">
           <div className="glass-card grid gap-4 p-4 sm:grid-cols-2 sm:p-5 lg:grid-cols-4">
             <div>
@@ -207,6 +213,8 @@ const MaterialPreviewPage = () => {
             </div>
           </div>
         </div>
+      )}
+        </ContentFadeIn>
       )}
     </>
   );

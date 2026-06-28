@@ -7,15 +7,15 @@ const SectionHeader = ({ icon: Icon, title, count, open, onToggle }) => (
   <button
     type="button"
     onClick={onToggle}
-    className="flex w-full items-center justify-between gap-3 rounded-xl border border-border/50 bg-card/40 px-4 py-3 text-left transition hover:border-primary/30 hover:bg-primary/5"
+    className="flex w-full items-center justify-between gap-3 rounded-xl border border-border/50 bg-card/40 px-3 py-3.5 text-left transition hover:border-primary/30 hover:bg-primary/5 sm:px-4"
   >
-    <div className="flex min-w-0 items-center gap-3">
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+    <div className="flex min-w-0 flex-1 items-center gap-3">
+      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
         <Icon className="h-4 w-4 text-primary" />
       </div>
-      <div className="min-w-0">
-        <p className="truncate font-display font-semibold text-foreground">{title}</p>
-        <p className="text-xs text-muted-foreground">
+      <div className="min-w-0 flex-1">
+        <p className="line-clamp-2 font-display font-semibold leading-snug text-foreground">{title}</p>
+        <p className="mt-0.5 text-xs text-muted-foreground">
           {count}
           {' lesson'}
           {count !== 1 ? 's' : ''}
@@ -30,11 +30,15 @@ const GroupedLessonSections = ({
   school = [],
   grouped = [],
   ungrouped = [],
+  renderGridLesson,
+  renderListLesson,
   renderLesson,
-  renderListLesson = renderLesson,
   defaultOpenAll = true,
   emptyMessage = 'No lessons in this section.',
 }) => {
+  const gridRenderer = renderGridLesson ?? renderLesson;
+  const listRenderer = renderListLesson ?? renderLesson;
+
   const [openSections, setOpenSections] = useState(() => {
     const initial = {};
     if (school.length) initial.school = defaultOpenAll;
@@ -48,8 +52,12 @@ const GroupedLessonSections = ({
   };
 
   const renderGrid = (lessons) => (
-    <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-      {lessons.length ? lessons.map(renderListLesson) : (
+    <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {lessons.length ? lessons.map((lesson) => (
+        <div key={lesson.id} className="min-w-0">
+          {gridRenderer(lesson)}
+        </div>
+      )) : (
         <p className="col-span-full py-6 text-center text-sm text-muted-foreground">{emptyMessage}</p>
       )}
     </div>
@@ -58,7 +66,7 @@ const GroupedLessonSections = ({
   const renderList = (lessons) => (
     <ul className="mt-3 divide-y divide-border/40 overflow-hidden rounded-xl border border-border/50 bg-card/40">
       {lessons.length ? lessons.map((lesson) => (
-        <li key={lesson.id}>{renderLesson(lesson)}</li>
+        <li key={lesson.id} className="min-w-0">{listRenderer(lesson)}</li>
       )) : (
         <li className="px-4 py-6 text-center text-sm text-muted-foreground">{emptyMessage}</li>
       )}
@@ -69,9 +77,9 @@ const GroupedLessonSections = ({
   if (!hasContent) return null;
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-4">
       {school.length > 0 && (
-        <GlassCard className="p-3 sm:p-4">
+        <GlassCard className="min-w-0 p-3 sm:p-4">
           <SectionHeader
             icon={GraduationCap}
             title="School lessons"
@@ -86,7 +94,7 @@ const GroupedLessonSections = ({
       )}
 
       {grouped.map((group) => (
-        <GlassCard key={group.id} className="p-3 sm:p-4">
+        <GlassCard key={group.id} className="min-w-0 p-3 sm:p-4">
           <SectionHeader
             icon={FolderOpen}
             title={group.title}
@@ -101,7 +109,7 @@ const GroupedLessonSections = ({
       ))}
 
       {ungrouped.length > 0 && (
-        <GlassCard className="p-3 sm:p-4">
+        <GlassCard className="min-w-0 p-3 sm:p-4">
           <SectionHeader
             icon={Layers}
             title="Ungrouped self-learn"
